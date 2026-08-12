@@ -416,8 +416,11 @@ export class TreeDialogComponent extends ResponsiveComponent implements OnInit, 
     }
 
     public destroy(): void {
-        this.treeNode.destroy()
-            .afterClosed()
+        const dialog = this.treeNode.destroy()
+        if (!dialog) {
+            return
+        }
+        dialog.afterClosed()
             .subscribe((dialogResult: boolean) => {
                 if (!dialogResult) {
                     return

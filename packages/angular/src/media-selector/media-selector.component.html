@@ -1,11 +1,26 @@
 <!-- !model.completed || model.saving -->
-<mat-progress-bar mode="indeterminate" *ngIf="!styled"></mat-progress-bar>
+<div class="media-selector media-selector--loading common-selector-styles" *ngIf="!styled"
+     style="box-sizing: border-box; min-height: 51px; padding: 8px 0;">
+    <div class="media-component section-container selected-container border-default border-default-all border-radius-default"
+         style="box-sizing: border-box; min-height: 35px; padding: 0;">
+        <div class="media-content media-selected-container"
+             style="align-items: center; display: flex; min-height: 35px;">
+            <div class="media-selector-loading-square"
+                 style="background: linear-gradient(100deg, #eeeeee 0%, #f7f7f7 50%, #eeeeee 100%); border: 1px solid #d8d8d8; box-sizing: border-box; height: 35px; width: 35px;"></div>
+            <mat-progress-bar mode="indeterminate"
+                              style="flex: 1 1 auto; margin-left: 10px; max-width: 160px;"></mat-progress-bar>
+        </div>
+    </div>
+</div>
 
-<div class="media-selector common-selector-styles" *ngIf="styled">
+<div class="media-selector common-selector-styles"
+     [ngClass]="{'media-selector--empty': empty}"
+     *ngIf="styled">
 
     <div class="media-component section-container selected-container border-default border-default-all border-radius-default">
         <p class="small-all-caps selected-media-label"
-           [textContent]="textDisplay.selected + ' ' + (type || textDisplay.items)"></p>
+           *ngIf="!empty"
+           [textContent]="textDisplay.selected + ' ' + textDisplay.selectedTypeLabel"></p>
         <!-- TODO: for styles from legacy selector, add class `selected-area` -->
         <div class="media-content media-selected-container"
              cdkDropListGroup
@@ -96,30 +111,22 @@
                                           svgIcon="media_selector_image"
                                           aria-hidden="true"
                                           [attr.aria-label]="textDisplay.image"
-                                          aria-label="Image">
-                                    Image
-                                </mat-icon>
+                                          aria-label="Image"></mat-icon>
                                 <mat-icon *ngIf="_.get(selectedModel, 'mime') && _.get(selectedModel, 'mime').includes('video')"
                                           svgIcon="media_selector_video"
                                           aria-hidden="true"
                                           [attr.aria-label]="textDisplay.video"
-                                          aria-label="Video">
-                                    Video
-                                </mat-icon>
+                                          aria-label="Video"></mat-icon>
                                 <mat-icon *ngIf="_.get(selectedModel, 'mime') && _.get(selectedModel, 'mime').includes('audio')"
                                           svgIcon="media_selector_audio"
                                           aria-hidden="true"
                                           [attr.aria-label]="textDisplay.audio"
-                                          aria-label="Audio">
-                                    Audio
-                                </mat-icon>
+                                          aria-label="Audio"></mat-icon>
                                 <mat-icon *ngIf="_.get(selectedModel, 'mime') && _.get(selectedModel, 'mime').includes('application')"
                                           svgIcon="media_selector_document"
                                           aria-hidden="true"
                                           [attr.aria-label]="textDisplay.document"
-                                          aria-label="Document">
-                                    Document
-                                </mat-icon>
+                                          aria-label="Document"></mat-icon>
                             </div>
                         </div>
 
@@ -217,28 +224,31 @@
             <div class="media-selected-list media-selected-list-grid">
                 <div class="library-toggle media-selected-box media-selected-box-grid">
                     <a class="position-anchor accent-background-hover border-default border-default-all color-primary"
-                        [matTooltip]="(libraryDisplay ? textDisplay.closeLibrary : textDisplay.openLibrary)"
+                        [matTooltip]="libraryDisplay ? textDisplay.closeLibrary : 'Open Library to Select Media'"
+                        matTooltipPosition="above"
                         (click)="toggleLibrary()"
                         [ngClass]="{'library-toggle-open': libraryDisplay}">
                         <!--<md-tooltip *ngIf="!libraryOpen">Open Media Library</md-tooltip>-->
                         <div aria-hidden="true">
-                            <mat-icon class="position-center"
+                            <mat-icon class="position-center library-toggle-icon"
                                       *ngIf="!libraryDisplay"
                                       svgIcon="media_selector_add"
-                                      aria-hidden="false"
-                                      [attr.aria-label]="textDisplay.add"
-                                      aria-label="Add">
-                                Add
-                            </mat-icon>
-                            <div class="btn-text small-all-caps position-center">
-                                {{ textDisplay.closeLibrary }}
-                            </div>
+                                      aria-hidden="true"
+                                      [attr.aria-label]="textDisplay.openLibraryToSelectMedia"></mat-icon>
+                            <mat-icon class="position-center library-toggle-icon"
+                                      *ngIf="libraryDisplay"
+                                      svgIcon="media_selector_minus"
+                                      aria-hidden="true"
+                                      [attr.aria-label]="textDisplay.closeLibrary"></mat-icon>
                             <img class="shapeholder"
                                  [src]="Stratus.BaseUrl + 'sitetheorycore/images/shapeholder-square.png'">
                         </div>
                     </a>
                 </div>
             </div>
+            <div class="media-selector-empty-instruction"
+                 *ngIf="empty"
+                 [textContent]="'Select Media from Library'"></div>
         </div>
     </div>
 </div>

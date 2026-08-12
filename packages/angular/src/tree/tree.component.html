@@ -40,6 +40,7 @@
                 Add links to start building a Menu.
             </div>
             <sa-internal-tree-node cdkDrag
+                          [cdkDragDisabled]="rootNode.model.get('locked')"
                           *ngFor="let rootNode of rootNodes"
                           (cdkDragMoved)="onDragMove($event)"
                           [cdkDragData]="rootNode"

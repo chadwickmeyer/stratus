@@ -6,6 +6,8 @@
 <div class="tree-node-content"
      [class.display-none]="parent && !isExpanded(parent)"
      [class.border]="tree.isBorder"
+     [class.locked]="node.model.get('locked')"
+     [class.system-container]="node.model.get('systemIdentification') === 'stagingContainer'"
      [attr.data-id]="node.id"
      [attr.id]="'node-'+node.id">
 
@@ -48,8 +50,8 @@
           [attr.id]="'node-'+node.id"
           [class.visibility-off]="node.model.get('status') === 0"
           [innerHTML]="getName(node)"
-          (click)="openDialogClick(node)"
-          (dblclick)="openDialogDblClick(node)"></span>
+          (click)="!node.model.get('locked') && openDialogClick(node)"
+          (dblclick)="!node.model.get('locked') && openDialogDblClick(node)"></span>
 
     <!-- drag preview is all that is viewable when dragging -->
     <!--<span cdkDragPreview-->
@@ -65,12 +67,14 @@
 
     <!-- Route Display -->
     <small class="hover-box"
+           *ngIf="node.model.get('systemIdentification') !== 'stagingContainer'"
            [class.route-none]="!node.model.get('route')"
            [class.type-none]="!node.model.get('content.contentType.iconResourcePath')">
         {{node.model.get('url') || node.model.get('route') || 'No route set!'}}
     </small>
 
-    <span class="hover-box hover-show position-absolute svg-grey">
+    <span class="hover-box hover-show position-absolute svg-grey"
+          *ngIf="!node.model.get('locked')">
         <a mat-button
            (click)="openDialogClick(node)"
            (dblclick)="openDialogDblClick(node)">
@@ -116,6 +120,7 @@
         -->
         <!-- display children -->
         <sa-internal-tree-node cdkDrag
+                      [cdkDragDisabled]="child.model.get('locked')"
                       *ngFor="let child of node.children"
                       (cdkDragMoved)="tree.onDragMove($event)"
                       [cdkDragData]="child"

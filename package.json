@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "npm run build && npm run lint",
+    "test": "npm run build && npm run test:bundle-order && npm run lint",
     "build": "npm run compileCSS && npm run compileCoffee && npm run bundle && npm run dist && npm run compress",
     "bundle": "npm run bundle:rollup && npm run compileTypeScript",
     "bundle:rollup": "node_modules/.bin/gulp compileES6TypeScript && npm run rollup",
@@ -22,6 +22,7 @@
     "karma": "node_modules/.bin/karma start karma.conf.js --single-run",
     "mocha": "node_modules/.bin/mocha --recursive --reporter mochawesome --reporter-options reportDir=reports",
     "lint": "node_modules/.bin/gulp lint",
+    "test:bundle-order": "node scripts/check-angular-bundle-order.js",
     "lint-deprecate": "node_modules/.bin/gulp lint && ng lint"
   },
   "repository": {
