@@ -1,7 +1,7 @@
 name: Pull Request CI Checks
 
 on:
-  pull_request_target:
+  pull_request:
     types: [ opened, reopened, synchronize ]
     branches:
       - 'master'
@@ -9,10 +9,7 @@ on:
     types: [ checks_requested ]
 
 permissions:
-  checks: write
   contents: read
-  pull-requests: write
-  statuses: write
 
 jobs:
 
