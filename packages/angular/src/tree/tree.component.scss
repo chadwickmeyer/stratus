@@ -147,6 +147,12 @@
         font-size: 15pt;
         padding-right: 0.5rem;
       }
+      &.locked {
+        .node-name,
+        .type-icon {
+          cursor: default;
+        }
+      }
       // this maintains alignment for parents without children
       .mat-button-placeholder {
         display: inline-block;

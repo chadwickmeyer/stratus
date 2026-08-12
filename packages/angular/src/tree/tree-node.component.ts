@@ -140,6 +140,14 @@ export class TreeNodeComponent extends ResponsiveComponent implements OnInit, On
         this.onPostPersist()
     }
 
+    public isLocked(node: Node = this.node): boolean {
+        return !!(node && node.model && node.model.get('locked'))
+    }
+
+    public isSystemContainer(node: Node = this.node): boolean {
+        return !!(node && node.model && node.model.get('systemIdentification') === 'stagingContainer')
+    }
+
     ngOnDestroy() {
         this.node.meta.component = null
         this.isDestroyed = true
@@ -167,7 +175,10 @@ export class TreeNodeComponent extends ResponsiveComponent implements OnInit, On
         this.openDialog()
     }
 
-    public destroy(): MatDialogRef<ConfirmDialogComponent, any> {
+    public destroy(): MatDialogRef<ConfirmDialogComponent, any>|null {
+        if (this.isLocked()) {
+            return null
+        }
         const dialog = this.dialog
             .open(ConfirmDialogComponent, {
                 maxWidth: '400px',
@@ -227,6 +238,9 @@ export class TreeNodeComponent extends ResponsiveComponent implements OnInit, On
 
     // TODO: Move things like toggle to this TreeNodeComponent, so it can be used in the template as well as the Dialog
     public openDialog(): void {
+        if (this.isLocked()) {
+            return
+        }
         if (!this.node.model || !has(this.node.model, 'data')) {
             return
         }
@@ -303,6 +317,9 @@ export class TreeNodeComponent extends ResponsiveComponent implements OnInit, On
     }
 
     public openDialogClick(): void {
+        if (this.isLocked()) {
+            return
+        }
         this.isSingleClick = true
         setTimeout(() => {
             if (!this.isSingleClick) {
@@ -313,6 +330,9 @@ export class TreeNodeComponent extends ResponsiveComponent implements OnInit, On
     }
 
     public openDialogDblClick(): void {
+        if (this.isLocked()) {
+            return
+        }
         this.isSingleClick = false
         this.openDialog()
     }
@@ -322,6 +342,9 @@ export class TreeNodeComponent extends ResponsiveComponent implements OnInit, On
     }
 
     public toggleStatus(): void {
+        if (this.isLocked()) {
+            return
+        }
         if (!this.node || !this.node.model) {
             return
         }
@@ -333,6 +356,9 @@ export class TreeNodeComponent extends ResponsiveComponent implements OnInit, On
     // TODO: Have this spawn off a new Tree Dialog with a new function addChild() on the TreeDialogComponent Class
     // TODO: Use the tree map to call node.openDialog after creating the new item
     public addChild(): void {
+        if (this.isLocked()) {
+            return
+        }
         let priority = max(
             this.tree.collection.models.filter(
                 (model: Model) => {

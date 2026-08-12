@@ -29,7 +29,7 @@
     <!-- FIXME: I will probably have to move the ngIf above to the div below -->
     <div class="selected-list-header border-default border-default-bottom" *ngIf="!empty; else emptyList">
         <h3 [textContent]="'Selected ' + (type || 'Items')"></h3>
-        <p class="note">Drag to reorder</p>
+        <p class="note">Drag to Reorder</p>
     </div>
     <div cdkDropList (cdkDropListDropped)="drop($event)">
         <!--<span class="selectedModels" style="display: none" [textContent]="dataSub | async | json"></span>-->

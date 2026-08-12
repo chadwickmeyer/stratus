@@ -1245,14 +1245,49 @@ Stratus.Internals.LoadImage = (obj: {el?: any, spy?: any, size?: any, ignoreSpy?
         (el.css('object-fit') || '').indexOf('cover') !== -1
     )
     const isCoverSized = isCoverBackground || isCoverImage
+    const parseAspectRatio = (ratio: string|number|null): number|null => {
+        if (!ratio || ratio === 'auto') {
+            return null
+        }
+        if (typeof ratio === 'number') {
+            return ratio > 0 ? ratio : null
+        }
+        const match = /^([\d.]+)(?:\s*[/]\s*([\d.]+))?$/.exec(ratio.trim())
+        if (!match) {
+            return null
+        }
+        const ratioWidth = Number(match[1])
+        const ratioHeight = Number(match[2] || 1)
+        return ratioWidth > 0 && ratioHeight > 0 ? ratioWidth / ratioHeight : null
+    }
+    const getElementAspectRatio = (element: any): number|null => {
+        if (!element) {
+            return null
+        }
+        const computedRatio = typeof window !== 'undefined' && window.getComputedStyle
+            ? window.getComputedStyle(element).aspectRatio
+            : null
+        return parseAspectRatio(computedRatio) ||
+            parseAspectRatio(hydrate(el.attr('data-stratus-src-natural-ratio'))) ||
+            parseAspectRatio(hydrate(el.attr('data-ratio-real')) || hydrate(el.attr('data-ratio-original')) || hydrate(el.attr('data-ratio')))
+    }
+    const hasRatioBoxSize = (element: any): boolean => {
+        const elementWidth = element && (element.offsetWidth || element.clientWidth || 0)
+        return type !== 'img' &&
+            isCoverSized &&
+            elementWidth > 0 &&
+            !!getElementAspectRatio(element)
+    }
     const hasNativeSize = (
         nativeEl.offsetHeight ||
         nativeEl.clientHeight ||
+        hasRatioBoxSize(nativeEl) ||
         (type !== 'img' && !isCoverBackground && (nativeEl.offsetWidth || nativeEl.clientWidth))
     )
     const hasReferenceSize = referenceEl && (
         referenceEl.offsetHeight ||
         referenceEl.clientHeight ||
+        hasRatioBoxSize(referenceEl) ||
         (type !== 'img' && !isCoverBackground && (referenceEl.offsetWidth || referenceEl.clientWidth))
     )
     if (!(hasNativeSize || hasReferenceSize)) {
@@ -1450,7 +1485,11 @@ Stratus.Internals.LoadImage = (obj: {el?: any, spy?: any, size?: any, ignoreSpy?
 
         // if (el.width()) {
         const nativeWidth = $referenceElement.offsetWidth || $referenceElement.clientWidth || null
-        const nativeHeight = $referenceElement.offsetHeight || $referenceElement.clientHeight || null
+        let nativeHeight = $referenceElement.offsetHeight || $referenceElement.clientHeight || null
+        const referenceAspectRatio = getElementAspectRatio($referenceElement)
+        if (!nativeHeight && type !== 'img' && isCoverSized && nativeWidth && referenceAspectRatio) {
+            nativeHeight = Math.ceil(nativeWidth / referenceAspectRatio)
+        }
         if (nativeWidth) {
             // Check if there is CSS width hard coded on the element
             // width = el.width()

@@ -115,6 +115,7 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
     @Input() property: string
     @Input() endpoint: string
     @Input() ignorePriority: boolean
+    @Input() liveEditContext: string
 
     // Dependencies
     get = get
@@ -223,7 +224,6 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
                     }
                     // this.onDataChange();
                     this.dataDefer(this.subscriber)
-                    this.prioritize()
                     this.refresh().then()
                 }
                 data.on('change', onDataChange)
@@ -276,6 +276,41 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
             forEach(models, (model: any) => model.priority = priority++)
         }
         this.model.trigger('change')
+        this.emitSelectorCollectionChange('reorder', models)
+    }
+
+    isLiveEditSelector(): boolean {
+        return this.liveEditContext === 'live-edit'
+    }
+
+    emitSelectorCollectionChange(action = 'change', models = this.dataRef()) {
+        this.elementRef.nativeElement.dispatchEvent(new CustomEvent('stratus-selector-reordered', {
+            bubbles: true,
+            composed: true,
+            detail: {
+                action,
+                model: this.model,
+                models,
+                property: this.property
+            }
+        }))
+    }
+
+    emitSelectorLiveEditAction(action: string, model: any): boolean {
+        const event = new CustomEvent('stratus-selector-live-edit-action', {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            detail: {
+                action,
+                model,
+                parentModel: this.model,
+                models: this.dataRef(),
+                property: this.property
+            }
+        })
+        this.elementRef.nativeElement.dispatchEvent(event)
+        return event.defaultPrevented
     }
 
     hasKnownSyndicatedStatus(model: any): boolean {
@@ -286,6 +321,12 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
     goToUrl(model: any, syndicatedStatus?: any) {
         if (!model || !model.contentType) {
             console.error('unable to execute goToUrl() because a valid model content was not provided.')
+            return
+        }
+        if (this.isLiveEditSelector()) {
+            if (!this.emitSelectorLiveEditAction('edit', model)) {
+                console.warn('Unable to open selector content in live edit drawer because no live edit handler accepted the action.', model)
+            }
             return
         }
         if (!isUndefined(syndicatedStatus) && syndicatedStatus !== null && syndicatedStatus !== '') {
@@ -829,6 +870,7 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
                 this.prioritize()
                 this.setPending(model, false)
                 this.model.trigger('change')
+                this.emitSelectorCollectionChange('duplicate', models)
                 this.refresh().then()
             })
             .catch((error: any) => {
@@ -1113,6 +1155,7 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
         models.splice(index, 1)
         // this.prioritize();
         this.model.trigger('change')
+        this.emitSelectorCollectionChange('remove', models)
     }
 
     // Data Connections
@@ -1277,7 +1320,6 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
 
     onDataChange() {
         // FIXME: This is not in use due to contextual issues.
-        this.prioritize()
         this.dataDefer(this.subscriber)
         this.refresh().then()
     }

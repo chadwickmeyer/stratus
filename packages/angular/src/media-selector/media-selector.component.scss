@@ -4,6 +4,10 @@
 sa-media-selector,
 sa-internal-media-selector,
 .media-selected-box.cdk-drag-preview {
+  --sa-media-selector-tile-size: 80px;
+  --sa-media-selector-tile-gap: 6px;
+  --sa-media-selector-empty-button-size: 35px;
+
   .content-type {
     margin-bottom: 2px;
     md-icon,
@@ -63,12 +67,66 @@ sa-internal-media-selector,
 .media-selector-wrapper {
   background: rgba(255, 255, 255, .4);
   margin-top: 20px;
-  padding: 40px;
+  padding: 16px;
 }
 
 /* Based on Angular Material 8+ */
 
 .media-selector {
+  box-sizing: border-box;
+
+  .selected-container {
+    background: #fff;
+    box-sizing: border-box;
+    padding: 16px;
+    border-radius: 2px;
+  }
+
+  &.media-selector--empty {
+    .selected-container {
+      min-height: var(--sa-media-selector-empty-button-size);
+    }
+
+    .media-selected-container {
+      align-items: center;
+      flex-wrap: nowrap;
+      min-height: var(--sa-media-selector-empty-button-size);
+    }
+
+    .media-selected-list,
+    .media-selected-box,
+    .library-toggle,
+    .library-toggle > a,
+    .library-toggle .position-anchor {
+      flex: 0 0 var(--sa-media-selector-empty-button-size);
+      width: var(--sa-media-selector-empty-button-size);
+      min-width: var(--sa-media-selector-empty-button-size);
+      max-width: var(--sa-media-selector-empty-button-size);
+      height: var(--sa-media-selector-empty-button-size);
+      min-height: var(--sa-media-selector-empty-button-size);
+      max-height: var(--sa-media-selector-empty-button-size);
+    }
+
+    .library-toggle mat-icon,
+    .library-toggle md-icon {
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      min-height: 18px;
+    }
+
+    .media-selector-empty-instruction {
+      flex: 1 1 auto;
+      align-self: center;
+      min-width: 0;
+      padding: 0 0 0 10px;
+      color: rgba(0, 0, 0, .48);
+      font-size: 12px;
+      line-height: var(--sa-media-selector-empty-button-size);
+      letter-spacing: .02em;
+    }
+  }
+
   .media-selected {
     // Note: an ampersand appears twice in this selector
     &-list.cdk-drop-list-dragging &-box:not(.cdk-drag-placeholder) {
@@ -81,14 +139,16 @@ sa-internal-media-selector,
   .media-selected,
   ul.media-selected {
     &-container {
-      display:flex;
+      display: flex;
       flex-wrap: wrap;
+      gap: var(--sa-media-selector-tile-gap);
     }
     &-list {
-      //width: 1000px;
+      flex: 0 0 var(--sa-media-selector-tile-size);
+      width: var(--sa-media-selector-tile-size);
       max-width: 100%;
       //border: solid 1px #ccc;
-      min-height: 60px;
+      min-height: var(--sa-media-selector-tile-size);
       display: flex;
       flex-direction: row;
       //background: white;
@@ -98,7 +158,7 @@ sa-internal-media-selector,
         flex-wrap: wrap;
       }
       .shapeholder {
-        width: 80px;
+        width: 100%;
         display: block;
       }
     }
@@ -110,7 +170,12 @@ sa-internal-media-selector,
       //height: 75px;
       //padding: 20px 10px;
       //width: 12.5%;
-      padding: 4px;
+      box-sizing: border-box;
+      width: var(--sa-media-selector-tile-size);
+      min-width: var(--sa-media-selector-tile-size);
+      height: var(--sa-media-selector-tile-size);
+      min-height: var(--sa-media-selector-tile-size);
+      padding: 0;
       //border-right: solid 1px #ccc;
       color: rgba(0, 0, 0, 0.87);
       // FIXME: when this uses display:flex, the box collapses
@@ -163,6 +228,64 @@ sa-internal-media-selector,
       display: flex;
       //padding-right: 10px;
       //padding-bottom: 10px;
+    }
+  }
+
+  .selected-media-item,
+  .image-draggable,
+  .library-toggle,
+  .library-toggle > a,
+  .library-toggle .position-anchor {
+    box-sizing: border-box;
+    width: var(--sa-media-selector-tile-size);
+    min-width: var(--sa-media-selector-tile-size);
+    max-width: var(--sa-media-selector-tile-size);
+    height: var(--sa-media-selector-tile-size);
+    min-height: var(--sa-media-selector-tile-size);
+    max-height: var(--sa-media-selector-tile-size);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .library-toggle {
+    display: block;
+
+    > a,
+    .position-anchor {
+      display: block;
+    }
+
+    mat-icon,
+    md-icon,
+    .library-toggle-icon {
+      color: #FF5B3A;
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      min-height: 24px;
+    }
+
+    ::ng-deep .library-toggle-icon svg,
+    ::ng-deep .library-toggle-icon svg g,
+    ::ng-deep .library-toggle-icon svg path,
+    ::ng-deep .library-toggle-icon svg rect {
+      fill: #FF5B3A;
+    }
+
+  }
+
+  .info-hover-container {
+    z-index: 100400;
+  }
+
+  &.media-selector--empty {
+    .library-toggle mat-icon,
+    .library-toggle md-icon,
+    .library-toggle .library-toggle-icon {
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      min-height: 18px;
     }
   }
 }

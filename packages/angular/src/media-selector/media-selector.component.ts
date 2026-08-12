@@ -269,6 +269,7 @@ export class MediaSelectorComponent extends RootComponent { // implements OnInit
             media_selector_info: `${Stratus.BaseUrl}sitetheorycore/images/icons/actionButtons/info.svg`,
             media_selector_link: `${Stratus.BaseUrl}sitetheorycore/images/icons/actionButtons/linkage.svg`,
             media_selector_download: `${Stratus.BaseUrl}sitetheorycore/images/icons/actionButtons/download.svg`,
+            media_selector_minus: `${Stratus.BaseUrl}sitetheorycore/images/icons/actionButtons/minus.svg`,
             // type icons
             media_selector_image: `${Stratus.BaseUrl}sitetheorymedia/images/mediaTypeIcons/media-icon-image.svg`,
             media_selector_video: `${Stratus.BaseUrl}sitetheorymedia/images/mediaTypeIcons/media-icon-video.svg`,

@@ -78,8 +78,8 @@ const genericValidationMessages = [
 ]
 const transientWriteFailureCode = 'API_TRANSIENT_WRITE_FAILURE'
 const retryableWriteMethods = ['POST', 'PUT', 'PATCH', 'DELETE']
-const transientWriteRetryBackoff = [250, 750, 1500]
-const transientWriteRetryMaxAttempts = 3
+const transientWriteRetryBackoff = [500, 1500, 3000, 5000]
+const transientWriteRetryMaxAttempts = transientWriteRetryBackoff.length + 1
 
 function normalizeStatusList(source: any): Array<LooseObject> {
     const status = get(source, 'meta.status') ||
@@ -736,10 +736,10 @@ export class Model<T = LooseObject> extends ModelBase<T> {
                             `XHR: ${request.method} ${request.url} returned ${transientWriteFailureCode}; retrying ${nextAttempt} of ${transientWriteRetryMaxAttempts}.`,
                             response
                         )
-                        if (this.toast) {
+                        if (this.toast && attempt === 1) {
                             Toastify({
-                                text: `The server was busy saving. Retrying ${nextAttempt} of ${transientWriteRetryMaxAttempts}...`,
-                                duration: 4000,
+                                text: 'The server was busy saving. Retrying automatically...',
+                                duration: 5000,
                                 close: true,
                                 stopOnFocus: true,
                                 style: {
@@ -761,10 +761,10 @@ export class Model<T = LooseObject> extends ModelBase<T> {
                             `XHR: ${request.method} ${request.url} returned ${transientWriteFailureCode}; retrying ${nextAttempt} of ${transientWriteRetryMaxAttempts}.`,
                             error
                         )
-                        if (this.toast) {
+                        if (this.toast && attempt === 1) {
                             Toastify({
-                                text: `The server was busy saving. Retrying ${nextAttempt} of ${transientWriteRetryMaxAttempts}...`,
-                                duration: 4000,
+                                text: 'The server was busy saving. Retrying automatically...',
+                                duration: 5000,
                                 close: true,
                                 stopOnFocus: true,
                                 style: {
@@ -1113,12 +1113,23 @@ export class Model<T = LooseObject> extends ModelBase<T> {
                         return
                     }
                     // TODO: Detect why we're getting internal messages outside of Dev Mode!
+                    const isTransientWriteFailure = isRetryableTransientWrite(this.getIdentifier() ? 'PUT' : 'POST', error)
                     const errorMessage = this.errorMessage(error) || getPreferredStatusMessage(this.meta.data)
                     Toastify({
-                        text: errorMessage || `Unable to Save ${this.target}.`,
+                        text: isTransientWriteFailure
+                            ? `The server was busy saving. Click here to retry ${this.target}.`
+                            : (errorMessage || `Unable to Save ${this.target}.`),
                         duration: 12000,
                         close: true,
                         stopOnFocus: true,
+                        onClick: isTransientWriteFailure
+                            ? () => {
+                                this.save({
+                                    force: true,
+                                    patch: options.patch
+                                })
+                            }
+                            : undefined,
                         style: {
                             background: '#E14D45',
                         }
