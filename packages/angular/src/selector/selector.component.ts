@@ -74,6 +74,17 @@ const localDir = `${Stratus.BaseUrl}${boot.configuration.paths[`${systemDir}/*`]
 
 // Utility Functions
 const hasNotEmpty = (object: object, path: string) => has(object, path) && !isEmpty(get(object, path))
+const hasNumericPriority = (value: any): boolean => {
+    if (isUndefined(value) || value === null || value === '') {
+        return false
+    }
+    return Number.isFinite(Number(value))
+}
+const selectorLocalOnlyFields = [
+    '_selectorImageUrl',
+    '_selectorPending',
+    '_selectorStale'
+]
 
 // export interface Model {
 //     completed: boolean;
@@ -158,6 +169,15 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
     staleModelIds: {
         [key: string]: boolean
     } = {}
+    inactiveSelectedModelCache: {
+        [key: string]: LooseObject
+    } = {}
+    removedSelectedModelIds: {
+        [key: string]: boolean
+    } = {}
+    liveEditSourceModels: {
+        [key: string]: Array<any>
+    } = {}
     selectedModelDisplayData: {
         [key: string]: LooseObject
     } = {}
@@ -208,6 +228,7 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
 
         // Hydrate Root App Inputs
         this.hydrate(elementRef, sanitizer, keys<SelectorComponent>())
+        this.bindLiveEditSourceEvents()
 
         // Data Connections
         this.fetchData()
@@ -216,6 +237,7 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
                     console.warn('Unable to bind data from Registry!')
                     return
                 }
+                this.ignoreSelectorLocalOnlyFields()
                 // Manually render upon model change
                 // this.ref.detach();
                 const onDataChange = () => {
@@ -271,10 +293,7 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
             return
         }
         moveItemInArray(models, event.previousIndex, event.currentIndex)
-        if (!this.ignorePriority) {
-            let priority = 0
-            forEach(models, (model: any) => model.priority = priority++)
-        }
+        this.prioritize()
         this.model.trigger('change')
         this.emitSelectorCollectionChange('reorder', models)
     }
@@ -283,7 +302,273 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
         return this.liveEditContext === 'live-edit'
     }
 
+    isLiveEditModuleSelector(): boolean {
+        return this.isLiveEditSelector() && this.property === 'version.modules'
+    }
+
+    cacheInactiveSelectedModel(model: any) {
+        if (!this.isLiveEditModuleSelector() || !model || !get(model, 'id')) {
+            return
+        }
+        this.forgetRemovedSelectedModel(model)
+        if (Number(get(model, 'status')) < 1) {
+            this.inactiveSelectedModelCache[String(get(model, 'id'))] = cloneDeep(model)
+        }
+    }
+
+    syncInactiveSelectedModelCache(model: any) {
+        this.forgetRemovedSelectedModel(model)
+        if (Number(get(model, 'status')) < 1) {
+            this.cacheInactiveSelectedModel(model)
+            return
+        }
+        this.removeInactiveSelectedModelCache(model)
+    }
+
+    removeInactiveSelectedModelCache(model: any) {
+        const id = get(model, 'id')
+        if (!isUndefined(id) && id !== null) {
+            delete this.inactiveSelectedModelCache[String(id)]
+        }
+    }
+
+    removeMissingInactiveSelectedModelCache(models: Array<any>) {
+        if (!models) {
+            return
+        }
+        Object.keys(this.inactiveSelectedModelCache).forEach((id: string) => {
+            if (!models.some((model: any) => String(get(model, 'id')) === id)) {
+                delete this.inactiveSelectedModelCache[id]
+            }
+        })
+    }
+
+    preserveInactiveSelectedModels(models: Array<any>) {
+        if (!this.isLiveEditModuleSelector() || !models) {
+            return
+        }
+
+        models.forEach((model: any) => this.cacheInactiveSelectedModel(model))
+        Object.keys(this.inactiveSelectedModelCache).forEach((id: string) => {
+            if (models.some((model: any) => String(get(model, 'id')) === id)) {
+                return
+            }
+            if (this.removedSelectedModelIds[id]) {
+                return
+            }
+
+            const cachedModel = cloneDeep(this.inactiveSelectedModelCache[id])
+            this.insertSelectedModelByPriority(models, cachedModel)
+            this.syncSelectedModelBaseline(cachedModel, Object.keys(cachedModel).filter((key: string) => key.indexOf('_selector') !== 0))
+        })
+    }
+
+    selectedModelId(model: any): number {
+        return Number(get(model, 'id') || 0)
+    }
+
+    markRemovedSelectedModel(model: any) {
+        const id = this.selectedModelId(model)
+        if (id) {
+            this.removedSelectedModelIds[String(id)] = true
+        }
+        this.removeInactiveSelectedModelCache(model)
+    }
+
+    forgetRemovedSelectedModel(model: any) {
+        const id = this.selectedModelId(model)
+        if (id) {
+            delete this.removedSelectedModelIds[String(id)]
+        }
+    }
+
+    insertSelectedModelByPriority(models: Array<any>, selectedModel: any) {
+        const priority = Number(get(selectedModel, 'priority'))
+        if (!Number.isFinite(priority)) {
+            models.push(selectedModel)
+            return
+        }
+        const insertIndex = models.findIndex((model: any) => {
+            const modelPriority = Number(get(model, 'priority'))
+            return Number.isFinite(modelPriority) && modelPriority > priority
+        })
+        models.splice(insertIndex === -1 ? models.length : insertIndex, 0, selectedModel)
+    }
+
+    contentPayload(source: any): any {
+        if (!source) {
+            return null
+        }
+        const data = source instanceof Model
+            ? source.data
+            : get(source, 'data') || source
+        const payload = get(data, 'payload')
+        return isObject(payload) ? payload : data
+    }
+
+    parentContentId(): number {
+        return Number(
+            this.id
+            || get(this.contentPayload(this.model), 'id')
+            || 0
+        )
+    }
+
+    liveEditSourceKey(): string {
+        return `${this.parentContentId()}:${this.property || ''}`
+    }
+
+    bindLiveEditSourceEvents() {
+        document.addEventListener('stratus-content-selector-source', this.handleLiveEditSourceChange as EventListener)
+    }
+
+    handleLiveEditSourceChange = (event: Event): void => {
+        if (!this.isLiveEditModuleSelector()) {
+            return
+        }
+        const detail = (event as CustomEvent)?.detail || {}
+        if (
+            Number(get(detail, 'parentId') || 0) !== this.parentContentId()
+            || get(detail, 'property') !== this.property
+            || !isArray(get(detail, 'models'))
+        ) {
+            return
+        }
+        this.liveEditSourceModels[this.liveEditSourceKey()] = get(detail, 'models')
+        this.emitDataChange()
+    }
+
+    liveEditSelectedModulesFromSource(source: any): Array<any>|null {
+        const payload = this.contentPayload(source)
+        if (!payload || Number(get(payload, 'id') || 0) !== this.parentContentId()) {
+            return null
+        }
+        const modules = get(payload, this.property)
+        return isArray(modules) ? modules : null
+    }
+
+    collectLiveEditModuleSources(): Array<any> {
+        if (!this.isLiveEditModuleSelector()) {
+            return []
+        }
+        const sources: Array<any> = []
+        const addSource = (source: any) => {
+            const modules = this.liveEditSelectedModulesFromSource(source)
+            if (!modules) {
+                return
+            }
+            if (sources.some((existing: any) => this.contentPayload(existing) === this.contentPayload(source))) {
+                return
+            }
+            sources.push(source)
+        }
+
+        const angularRef = get(window, 'angular')
+        let scope: any = null
+        if (angularRef && typeof angularRef.element === 'function') {
+            const element = angularRef.element(this.elementRef.nativeElement)
+            if (element && typeof element.scope === 'function') {
+                scope = element.scope()
+            }
+        }
+
+        while (scope) {
+            addSource(get(scope, 'model'))
+            addSource(get(scope, 'liveEdit.model'))
+            addSource(get(scope, '$root.liveEdit.model'))
+            scope = get(scope, '$parent')
+        }
+
+        const sourceModels = this.liveEditSourceModels[this.liveEditSourceKey()]
+        if (isArray(sourceModels)) {
+            addSource({
+                id: this.parentContentId(),
+                version: {
+                    modules: sourceModels
+                }
+            })
+        }
+
+        forEach(Stratus.Instances, (instance: any) => {
+            const liveEditParentId = Number(get(instance, 'liveEditParentId') || get(instance, '$ctrl.liveEditParentId') || 0)
+            const liveEditProperty = get(instance, 'liveEditProperty') || get(instance, '$ctrl.liveEditProperty')
+            const liveEditNgModel = get(instance, '$ctrl.ngModel') || get(instance, 'ngModel')
+            if (
+                liveEditParentId !== this.parentContentId()
+                || liveEditProperty !== this.property
+                || !isArray(liveEditNgModel)
+            ) {
+                return
+            }
+            addSource({
+                id: liveEditParentId,
+                version: {
+                    modules: liveEditNgModel
+                }
+            })
+        })
+
+        return sources
+    }
+
+    ngOnDestroy() {
+        document.removeEventListener('stratus-content-selector-source', this.handleLiveEditSourceChange as EventListener)
+        delete Stratus.Instances[this.uid]
+    }
+
+    mergeLiveEditSelectedModels(models: Array<any>) {
+        if (!this.isLiveEditModuleSelector() || !models) {
+            return
+        }
+
+        const currentModelsById: {[key: string]: any} = {}
+        models.forEach((model: any) => {
+            const id = this.selectedModelId(model)
+            if (id) {
+                currentModelsById[String(id)] = model
+            }
+        })
+
+        this.collectLiveEditModuleSources().forEach((source: any) => {
+            const sourceModels = this.liveEditSelectedModulesFromSource(source)
+            if (!sourceModels) {
+                return
+            }
+            sourceModels.forEach((sourceModel: any) => {
+                const id = this.selectedModelId(sourceModel)
+                if (!id || this.removedSelectedModelIds[String(id)]) {
+                    return
+                }
+                const currentModel = currentModelsById[String(id)]
+                if (currentModel) {
+                    if (has(sourceModel, 'status')) {
+                        currentModel.status = cloneDeep(get(sourceModel, 'status'))
+                    }
+                    if (has(sourceModel, 'priority')) {
+                        currentModel.priority = cloneDeep(get(sourceModel, 'priority'))
+                    }
+                    this.syncInactiveSelectedModelCache(currentModel)
+                    return
+                }
+
+                const selectedModel = cloneDeep(sourceModel)
+                this.insertSelectedModelByPriority(models, selectedModel)
+                currentModelsById[String(id)] = selectedModel
+                this.syncInactiveSelectedModelCache(selectedModel)
+                this.syncSelectedModelBaseline(selectedModel, Object.keys(selectedModel).filter((key: string) => key.indexOf('_selector') !== 0))
+            })
+        })
+    }
+
     emitSelectorCollectionChange(action = 'change', models = this.dataRef()) {
+        if (this.isLiveEditModuleSelector()) {
+            if (action.indexOf('remove') === 0 || action.indexOf('delete') === 0) {
+                this.removeMissingInactiveSelectedModelCache(models)
+            } else {
+                this.mergeLiveEditSelectedModels(models)
+                this.preserveInactiveSelectedModels(models)
+            }
+        }
         this.elementRef.nativeElement.dispatchEvent(new CustomEvent('stratus-selector-reordered', {
             bubbles: true,
             composed: true,
@@ -311,6 +596,21 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
         })
         this.elementRef.nativeElement.dispatchEvent(event)
         return event.defaultPrevented
+    }
+
+    emitSelectorItemChange(action: string, model: any, data: any = model) {
+        this.elementRef.nativeElement.dispatchEvent(new CustomEvent('stratus-selector-item-changed', {
+            bubbles: true,
+            composed: true,
+            detail: {
+                action,
+                model,
+                data,
+                parentModel: this.model,
+                models: this.dataRef(),
+                property: this.property
+            }
+        }))
     }
 
     hasKnownSyndicatedStatus(model: any): boolean {
@@ -512,6 +812,56 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
         this.refresh().then()
     }
 
+    ignoreSelectorLocalOnlyFields() {
+        const parentModel: any = this.model
+        if (!parentModel || !isArray(parentModel.ignoreKeys)) {
+            return
+        }
+        selectorLocalOnlyFields.forEach((key: string) => {
+            if (parentModel.ignoreKeys.indexOf(key) === -1) {
+                parentModel.ignoreKeys.push(key)
+            }
+        })
+    }
+
+    syncSelectedModelBaseline(model: any, fields: Array<string>) {
+        const parentModel: any = this.model
+        const id = Number(get(model, 'id') || 0)
+        if (!parentModel || !id || !fields.length) {
+            return
+        }
+        const insertByPriority = (models: Array<any>, baselineModel: any): void => {
+            const priority = Number(get(baselineModel, 'priority'))
+            if (!Number.isFinite(priority)) {
+                models.push(baselineModel)
+                return
+            }
+            const index = models.findIndex((item: any) => {
+                const itemPriority = Number(get(item, 'priority'))
+                return Number.isFinite(itemPriority) && itemPriority > priority
+            })
+            models.splice(index === -1 ? models.length : index, 0, baselineModel)
+        }
+        ;['recv', 'sent'].forEach((baselineKey: string) => {
+            const baseline = get(parentModel, baselineKey)
+            let models = get(baseline, this.property)
+            if (!isArray(models)) {
+                set(baseline, this.property, [])
+                models = get(baseline, this.property)
+            }
+            let baselineModel = models.find((item: any) => Number(get(item, 'id') || 0) === id)
+            if (!baselineModel) {
+                baselineModel = cloneDeep(model)
+                insertByPriority(models, baselineModel)
+            }
+            fields.forEach((field: string) => {
+                if (has(model, field)) {
+                    set(baselineModel, field, cloneDeep(get(model, field)))
+                }
+            })
+        })
+    }
+
     applySelectedModelData(model: any, incoming: any, options: LooseObject = {}) {
         if (!model || !isObject(incoming)) {
             return
@@ -641,6 +991,7 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
             return
         }
         const openEditWindow = isUndefined(options.openEditWindow) ? true : !!options.openEditWindow
+        const emitDataChange = isUndefined(options.emitDataChange) ? true : !!options.emitDataChange
         const models = this.dataRef()
         const index = this.getSelectionIndex(model)
         if (!models || !models.length || !model || !model.id || index === -1) {
@@ -714,7 +1065,13 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
                 }
                 this.prioritize()
                 this.model.trigger('change')
-                this.emitDataChange()
+                if (emitDataChange) {
+                    this.emitDataChange()
+                }
+                if (this.isLiveEditSelector()) {
+                    this.emitSelectorCollectionChange(options.liveEditAction || 'customize', models)
+                    this.emitSelectorItemChange(options.liveEditAction || 'customize', model, model)
+                }
                 if (openEditWindow) {
                     this.openEditWindow(model)
                 }
@@ -733,41 +1090,49 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
         if (this.isPending(model)) {
             return
         }
-        if (!this.hasKnownSyndicatedStatus(model)) {
-            this.setPending(model, true)
-            this.fetchSyndication(model)
-                .then(() => {
-                    this.setPending(model, false)
-                    this.toggleStatus(model)
-                })
-                .catch((error: any) => {
-                    console.error('error[toggleStatus]: unable to determine syndicated status before toggling status.', error)
-                    this.setPending(model, false)
-                    this.refresh().then()
-                })
-            return
-        }
         // model is not directly a model, but just a sub entity of content.version.modules
         // so we have to create a special API call to update just this one model
         // 'Content/' + model.id
-        let meta = {}
+        let meta: LooseObject = {}
         if (!isUndefined(this.data)) {
-            meta = get(this.data, 'meta.data.api')
+            meta = Object.assign({}, get(this.data, 'meta.data.api') || {})
         }
+        delete meta.apiSpecialAction
+        meta.forceContext = meta.forceContext || 'context'
+        meta.minStatus = 0
+        meta.showAssociatedContent = true
+        meta.showEditUrl = true
+        meta.showLayout = true
+        meta.showRouting = true
+        meta.showSentinels = true
         const statusOriginal = model.status
         const statusTarget = statusOriginal === 1 ? 0 : 1
         if (this.requiresLocalCopyBeforeEdit(model)) {
+            model.status = statusTarget
+            this.syncInactiveSelectedModelCache(model)
+            this.syncSelectedModelBaseline(model, ['status'])
+            this.emitSelectorItemChange('status', model, model)
             this.customizeSyndicatedForEdit(
                 model,
                 {status: statusTarget},
                 {
+                    emitDataChange: false,
+                    liveEditAction: 'status',
                     openEditWindow: false,
-                    onFailure: () => model.status = statusOriginal
+                    onFailure: () => {
+                        model.status = statusOriginal
+                        this.syncInactiveSelectedModelCache(model)
+                        this.syncSelectedModelBaseline(model, ['status'])
+                        this.emitSelectorItemChange('status', model, model)
+                    }
                 }
             )
             return
         }
         model.status = statusOriginal === 1 ? 0 : 1
+        this.syncInactiveSelectedModelCache(model)
+        this.syncSelectedModelBaseline(model, ['status'])
+        this.emitSelectorItemChange('status', model, model)
         this.setPending(model, true)
         // Create a direct XHR
         const xhr = new XHR({
@@ -777,6 +1142,7 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
                 route: {},
                 meta,
                 payload: {
+                    id: model.id,
                     status: model.status
                 }
             },
@@ -787,17 +1153,38 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
                 if (!isObject(response) || get(response, 'meta.status[0].code') !== 'SUCCESS') {
                     console.error('error[toggleStatus]:', response)
                     model.status = statusOriginal
+                    this.syncInactiveSelectedModelCache(model)
+                    this.syncSelectedModelBaseline(model, ['status'])
+                    this.emitSelectorItemChange('status', model, model)
                     this.setPending(model, false)
                     this.refresh().then()
                     return
                 }
                 // console.log('success[toggleStatus]:', response)
+                const payload = get(response, 'payload') || response
+                model.status = Number(get(payload, 'status', model.status))
+                ;[
+                    'id',
+                    'overwriteId',
+                    'siteId',
+                    'syndicated'
+                ].forEach((field) => {
+                    const value = get(payload, field)
+                    if (!isUndefined(value) && value !== null) {
+                        model[field] = value
+                    }
+                })
+                this.syncInactiveSelectedModelCache(model)
+                this.syncSelectedModelBaseline(model, ['status'])
                 this.setPending(model, false)
-                this.emitDataChange()
+                this.emitSelectorItemChange('status', model, model)
             })
             .catch((error: any) => {
                 console.error('error[toggleStatus]:', error)
                 model.status = statusOriginal
+                this.syncInactiveSelectedModelCache(model)
+                this.syncSelectedModelBaseline(model, ['status'])
+                this.emitSelectorItemChange('status', model, model)
                 this.setPending(model, false)
                 this.refresh().then()
             })
@@ -1083,12 +1470,21 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
         }
 
         const statusOriginal = model.status
+        const models = this.dataRef()
+        const index = this.getSelectionIndex(model)
+        const removedFromSelection = index !== -1
         let meta = {}
         if (!isUndefined(this.data)) {
             meta = get(this.data, 'meta.data.api') || {}
         }
         this.setPending(model, true)
         model.status = -1
+        this.markRemovedSelectedModel(model)
+        if (removedFromSelection) {
+            models.splice(index, 1)
+            this.model.trigger('change')
+            this.emitSelectorCollectionChange('delete', models)
+        }
 
         const xhr = new XHR({
             method: 'PUT',
@@ -1108,17 +1504,27 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
                 if (!isObject(response) || get(response, 'meta.status[0].code') !== 'SUCCESS') {
                     console.error('error[deleteContent]:', response)
                     model.status = statusOriginal
+                    this.syncInactiveSelectedModelCache(model)
+                    if (removedFromSelection) {
+                        models.splice(index, 0, model)
+                        this.model.trigger('change')
+                        this.emitSelectorCollectionChange('delete-rollback', models)
+                    }
                     this.setPending(model, false)
                     this.refresh().then()
                     return
                 }
                 this.setPending(model, false)
-                this.remove(model)
-                this.refresh().then()
             })
             .catch((error: any) => {
                 console.error('error[deleteContent]:', error)
                 model.status = statusOriginal
+                this.syncInactiveSelectedModelCache(model)
+                if (removedFromSelection) {
+                    models.splice(index, 0, model)
+                    this.model.trigger('change')
+                    this.emitSelectorCollectionChange('delete-rollback', models)
+                }
                 this.setPending(model, false)
                 this.refresh().then()
             })
@@ -1152,6 +1558,7 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
             console.error('unable to find model:', model, 'in selection:', models)
             return
         }
+        this.markRemovedSelectedModel(model)
         models.splice(index, 1)
         // this.prioritize();
         this.model.trigger('change')
@@ -1189,6 +1596,9 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
             return
         }
         const models = this.dataRef()
+        this.mergeLiveEditSelectedModels(models)
+        this.preserveInactiveSelectedModels(models)
+        this.sortByPriority(models)
         this.empty = !models.length
         this.hydrateSelectedDisplayData(models)
         this.subscriber.next(models)
@@ -1330,9 +1740,29 @@ export class SelectorComponent extends RootComponent { // implements OnInit, OnC
             return
         }
         if (!this.ignorePriority) {
-            let priority = 0
-            forEach(models, (model) => model.priority = priority++)
+            forEach(models, (model, index) => model.priority = index)
         }
+    }
+
+    sortByPriority(models = this.dataRef()) {
+        if (!models || !models.length || this.ignorePriority) {
+            return
+        }
+        models.sort((current: any, next: any): number => {
+            const currentPriority = get(current, 'priority')
+            const nextPriority = get(next, 'priority')
+            const currentHasPriority = hasNumericPriority(currentPriority)
+            const nextHasPriority = hasNumericPriority(nextPriority)
+
+            if (currentHasPriority && nextHasPriority && Number(currentPriority) !== Number(nextPriority)) {
+                return Number(currentPriority) - Number(nextPriority)
+            }
+            if (currentHasPriority !== nextHasPriority) {
+                return currentHasPriority ? -1 : 1
+            }
+
+            return Number(get(current, 'id') || 0) - Number(get(next, 'id') || 0)
+        })
     }
 
     getSvg(url: string, options?: IconOptions): Observable<string> {
