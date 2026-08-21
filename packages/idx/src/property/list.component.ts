@@ -66,6 +66,7 @@ export type IdxPropertyListScope = IdxListScope<Property> & {
     detailsLinkUrl: string
     detailsLinkTarget: 'popup' | '_self' | '_blank'
     detailsHideVariables?: string[]
+    detailsLayout?: string
     advancedSearchUrl: string,
     advancedSearchLinkName: string,
     preferredStatus: 'Closed' | 'Leased' | 'Rented'
@@ -74,9 +75,16 @@ export type IdxPropertyListScope = IdxListScope<Property> & {
     orderOptions: OrderOption[]
     displayOrderOptions: boolean
     googleApiKey?: string
+    contactData?: string
     contactName: string
     contactEmail?: string
     contactPhone: string
+    ctaMiniTitle?: string
+    ctaTitle?: string
+    ctaValue?: string
+    ctaButton?: string
+    ctaUrl?: string
+    ctaBrowserTarget?: string
     instancePath: string
     mapMarkers: MarkerSettings[]
     displayPerRow: number,
@@ -160,6 +168,12 @@ Stratus.Components.IdxPropertyList = {
         detailsHideVariables: '@',
         /**
          * Type: string
+         * PropertyFilter layout controller used to select the Details popup template.
+         * Empty values use the default Showcase template.
+         */
+        detailsLayout: '@',
+        /**
+         * Type: string
          * Default: 'details'
          * The file name in which is loaded for the view of the Details widget. The name will automatically be appended
          * with '.component.min.html'. The default is `'details.component.html'` / `'details'`. This view only  is used
@@ -192,6 +206,7 @@ Stratus.Components.IdxPropertyList = {
          * will be passed to any Details popups.
          */
         contactName: '@',
+        contactData: '@',
         /**
          * Type: string
          * If used, expects full email address to publicly display and generate a clickable link for. Parameter will
@@ -204,6 +219,12 @@ Stratus.Components.IdxPropertyList = {
          * be passed to any Details popups.
          */
         contactPhone: '@',
+        ctaMiniTitle: '@',
+        ctaTitle: '@',
+        ctaValue: '@',
+        ctaButton: '@',
+        ctaUrl: '@',
+        ctaBrowserTarget: '@',
         /**
          * Type: string
          * Default: 'list'
@@ -334,6 +355,7 @@ Stratus.Components.IdxPropertyList = {
                     $scope.detailsLinkTarget === 'popup'
             $scope.detailsHideVariables = $attrs.detailsHideVariables && isJSON($attrs.detailsHideVariables) ?
                 JSON.parse($attrs.detailsHideVariables) : []
+            $scope.detailsLayout = $attrs.detailsLayout || null
             $scope.detailsTemplate = $attrs.detailsTemplate || null
             $scope.advancedSearchUrl = $attrs.advancedSearchUrl || ''
             $scope.advancedSearchLinkName = $attrs.advancedSearchLinkName || 'Advanced Search'
@@ -418,9 +440,16 @@ Stratus.Components.IdxPropertyList = {
             ]
 
             $scope.googleApiKey = $attrs.googleApiKey || null
+            $scope.contactData = $attrs.contactData || null
             $scope.contactName = $attrs.contactName || null
             $scope.contactEmail = $attrs.contactEmail || null
             $scope.contactPhone = $attrs.contactPhone || null
+            $scope.ctaMiniTitle = $attrs.ctaMiniTitle || ''
+            $scope.ctaTitle = $attrs.ctaTitle || ''
+            $scope.ctaValue = $attrs.ctaValue || ''
+            $scope.ctaButton = $attrs.ctaButton || ''
+            $scope.ctaUrl = $attrs.ctaUrl || ''
+            $scope.ctaBrowserTarget = $attrs.ctaBrowserTarget || ''
 
             $scope.mapMarkers = []
 
@@ -957,9 +986,16 @@ Stratus.Components.IdxPropertyList = {
                     'default-list-options': string,
                     'page-title': boolean,
                     'google-api-key'?: string,
+                    'contact-data'?: string,
                     'contact-name'?: string,
                     'contact-email'?: string,
                     'contact-phone'?: string,
+                    'cta-mini-title'?: string,
+                    'cta-title'?: string,
+                    'cta-value'?: string,
+                    'cta-button'?: string,
+                    'cta-url'?: string,
+                    'cta-browser-target'?: string,
                     'hide-variables'?: string, // a string array
                     'preferred-status'?: string,
                     template?: string,
@@ -975,6 +1011,9 @@ Stratus.Components.IdxPropertyList = {
                 if ($scope.getGoogleMapsKey()) {
                     templateOptions['google-api-key'] = $scope.getGoogleMapsKey()
                 }
+                if ($scope.contactData) {
+                    templateOptions['contact-data'] = $scope.contactData
+                }
                 if ($scope.contactName) {
                     templateOptions['contact-name'] = $scope.contactName
                 }
@@ -984,14 +1023,33 @@ Stratus.Components.IdxPropertyList = {
                 if ($scope.contactPhone) {
                     templateOptions['contact-phone'] = $scope.contactPhone
                 }
+                if ($scope.ctaMiniTitle) {
+                    templateOptions['cta-mini-title'] = $scope.ctaMiniTitle
+                }
+                if ($scope.ctaTitle) {
+                    templateOptions['cta-title'] = $scope.ctaTitle
+                }
+                if ($scope.ctaValue) {
+                    templateOptions['cta-value'] = $scope.ctaValue
+                }
+                if ($scope.ctaButton) {
+                    templateOptions['cta-button'] = $scope.ctaButton
+                }
+                if ($scope.ctaUrl) {
+                    templateOptions['cta-url'] = $scope.ctaUrl
+                }
+                if ($scope.ctaBrowserTarget) {
+                    templateOptions['cta-browser-target'] = $scope.ctaBrowserTarget
+                }
                 if ($scope.detailsHideVariables.length > 0) {
                     templateOptions['hide-variables'] = JSON.stringify($scope.detailsHideVariables)
                 }
                 if ($scope.preferredStatus) {
                     templateOptions['preferred-status'] = $scope.preferredStatus
                 }
-                if ($scope.detailsTemplate) {
-                    templateOptions.template = $scope.detailsTemplate
+                const selectedDetailsTemplate = $scope.detailsTemplate || getDetailsTemplateFromLayout($scope.detailsLayout)
+                if (selectedDetailsTemplate) {
+                    templateOptions.template = selectedDetailsTemplate
                 }
 
                 let template =
@@ -1001,7 +1059,7 @@ Stratus.Components.IdxPropertyList = {
                     `</div>` +
                     '<stratus-idx-property-details '
                 forEach(templateOptions, (optionValue, optionKey) => {
-                    template += `data-${optionKey}='${optionValue}'`
+                    template += ` data-${optionKey}='${String(optionValue).replace(/'/g, '&#39;')}'`
                 })
                 template +=
                     '></stratus-idx-property-details>' +
@@ -1055,4 +1113,36 @@ Stratus.Components.IdxPropertyList = {
         }
     },
     templateUrl: ($attrs: IAttributes): string => `${localDir}${$attrs.template || componentName}.component${min}.html`
+}
+
+const getDetailsTemplateFromLayout = (layout?: string): string | null => {
+    switch (layout) {
+        case 'PropertyFilter-Compact':
+        case 'Compact':
+        case 'compact':
+            return 'details.compact'
+        case 'PropertyFilter-Showcase':
+        case 'Showcase':
+        case 'showcase':
+            return 'details.showcase'
+        case 'PropertyFilter-Magazine':
+        case 'Magazine':
+        case 'magazine':
+            return 'details.magazine'
+        case 'PropertyFilter-Cosmopolitan':
+        case 'Cosmopolitan':
+        case 'cosmopolitan':
+            return 'details.cosmopolitan'
+        case 'PropertyFilter-Luxury':
+        case 'Luxury':
+        case 'luxury':
+            return 'details.luxury'
+        case 'PropertyFilter':
+        case null:
+        case undefined:
+        case '':
+            return null
+        default:
+            return null
+    }
 }

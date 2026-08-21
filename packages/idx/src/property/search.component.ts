@@ -80,6 +80,7 @@ export type IdxPropertySearchScope = IdxSearchScope & {
     advancedSearchUrl: string
     advancedSearchLinkName: string
     advancedFiltersStatus: boolean
+    hidePreviewResults: boolean
     openPrice: boolean
     listLinkTarget: string
     // options: object | any // TODO need to specify
@@ -234,6 +235,11 @@ Stratus.Components.IdxPropertySearch = {
          * @TODO add to wiki
          */
         displayFilterFullHeight: '@',
+        /**
+         * Type: boolean
+         * Hide the admin filter template's preview button when the containing page already previews results.
+         */
+        hidePreviewResults: '@',
         // TODO
         variableSync: '@',
         // TODO
@@ -294,6 +300,8 @@ Stratus.Components.IdxPropertySearch = {
             $scope.options = $attrs.options && isJSON($attrs.options) ? JSON.parse($attrs.options) : {}
             $scope.displayFilterFullHeight = $attrs.displayFilterFullHeight && isJSON($attrs.displayFilterFullHeight) ?
                 JSON.parse($attrs.displayFilterFullHeight) : false
+            $scope.hidePreviewResults = $attrs.hidePreviewResults && isJSON($attrs.hidePreviewResults) ?
+                JSON.parse($attrs.hidePreviewResults) : false
             $scope.filterMenu = null
             $scope.options.forRent ||= false
             $scope.options.agentGroups ??= []

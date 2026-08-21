@@ -209,7 +209,9 @@ export default [
       include: [
         './packages/idx/src/**/*.js'
       ],
-      exclude: []
+      exclude: [
+        './packages/idx/src/**/*.min.js'
+      ]
     },
     external: [
       'angular',

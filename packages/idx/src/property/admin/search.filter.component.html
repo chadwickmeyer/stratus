@@ -474,6 +474,9 @@
                                 required
                                 multiple
                         >
+                            <md-option data-ng-value="0">
+                                Exclusive (personal)
+                            </md-option>
                             <md-option data-ng-repeat="mls in getMLSVariables()" data-ng-value="mls.id">
                                 {{mls.name}}
                             </md-option>
@@ -488,7 +491,7 @@
     </div>
 
     <!-- Preview Results will not appear if a list isn't defined -->
-    <div class="search-row" data-layout="row" data-layout-align="space-around left" data-ng-if="listId">
+    <div class="search-row" data-layout="row" data-layout-align="space-around left" data-ng-if="listId && !hidePreviewResults">
         <button type="button" class="btn btn-submit" data-ng-click="search()">Preview Results</button>
     </div>
 </div>
