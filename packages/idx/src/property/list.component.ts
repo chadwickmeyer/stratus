@@ -79,6 +79,7 @@ export type IdxPropertyListScope = IdxListScope<Property> & {
     contactName: string
     contactEmail?: string
     contactPhone: string
+    contactWebsiteUrl?: string
     ctaMiniTitle?: string
     ctaTitle?: string
     ctaValue?: string
@@ -219,6 +220,7 @@ Stratus.Components.IdxPropertyList = {
          * be passed to any Details popups.
          */
         contactPhone: '@',
+        contactWebsiteUrl: '@',
         ctaMiniTitle: '@',
         ctaTitle: '@',
         ctaValue: '@',
@@ -444,6 +446,7 @@ Stratus.Components.IdxPropertyList = {
             $scope.contactName = $attrs.contactName || null
             $scope.contactEmail = $attrs.contactEmail || null
             $scope.contactPhone = $attrs.contactPhone || null
+            $scope.contactWebsiteUrl = $attrs.contactWebsiteUrl || null
             $scope.ctaMiniTitle = $attrs.ctaMiniTitle || ''
             $scope.ctaTitle = $attrs.ctaTitle || ''
             $scope.ctaValue = $attrs.ctaValue || ''
@@ -998,6 +1001,7 @@ Stratus.Components.IdxPropertyList = {
                     'contact-name'?: string,
                     'contact-email'?: string,
                     'contact-phone'?: string,
+                    'contact-website-url'?: string,
                     'cta-mini-title'?: string,
                     'cta-title'?: string,
                     'cta-value'?: string,
@@ -1030,6 +1034,9 @@ Stratus.Components.IdxPropertyList = {
                 }
                 if ($scope.contactPhone) {
                     templateOptions['contact-phone'] = $scope.contactPhone
+                }
+                if ($scope.contactWebsiteUrl) {
+                    templateOptions['contact-website-url'] = $scope.contactWebsiteUrl
                 }
                 if ($scope.ctaMiniTitle) {
                     templateOptions['cta-mini-title'] = $scope.ctaMiniTitle
