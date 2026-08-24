@@ -118,7 +118,6 @@ stratus-idx-property-details {
   .property-details-default {
     min-height: 100%;
 
-    &.property-details-luxury,
     &.property-details-showcase,
     &.property-details-magazine,
     &.property-details-cosmopolitan {
@@ -341,6 +340,319 @@ stratus-idx-property-details {
     }
 
     &.property-details-luxury {
+      &::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 100;
+        height: 125px;
+        background: linear-gradient(to bottom, rgba(0, 0, 0, .72) 0%, rgba(0, 0, 0, .42) 45%, rgba(0, 0, 0, 0) 100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .4s ease;
+      }
+
+      &.scroll-up.off-screen::before {
+        opacity: 1;
+      }
+
+      .property-header.header-elements-wrapper {
+        background: #fff;
+      }
+
+      .details-header {
+        position: relative;
+        padding: 65px 6% 38px;
+        text-align: center;
+        background: #fff;
+
+        @media @idx-phone {
+          padding-top: 85px;
+        }
+
+        h1 {
+          margin: 0 0 26px;
+          color: #1d1d1d;
+          font-size: 60px;
+          line-height: 1.05;
+
+          @media @idx-phone {
+            font-size: 30px;
+          }
+        }
+
+        h4.city {
+          margin: 0;
+          color: #000;
+          font-size: 12px;
+          font-weight: bold;
+          letter-spacing: 3px;
+          text-transform: uppercase;
+        }
+
+        .sold-sticker {
+          display: table;
+          margin: 0 auto 30px;
+          padding: 3px 14px;
+          color: #fff;
+          font-size: 15px;
+          font-weight: bold;
+          letter-spacing: 1px;
+          line-height: 1.3;
+          text-transform: uppercase;
+
+          .price-break::after {
+            display: inline-block;
+            content: "|";
+            padding: 0 5px;
+          }
+        }
+
+        .header-mls {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          margin: 22px 0 0;
+          color: #333;
+          font-size: 12px;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+
+          .mls-logo img {
+            display: block;
+            max-height: 18px;
+          }
+        }
+      }
+
+      .idx-property-section-nav {
+        position: static;
+        display: table;
+        max-width: 100%;
+        margin: 34px auto 0;
+        padding: 0 22px;
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+        transition: opacity .4s ease, transform .4s ease;
+
+        ul {
+          display: table;
+          margin: 0 auto;
+          padding: 0;
+          white-space: nowrap;
+        }
+
+        li {
+          display: inline-block;
+          padding: 0 16px;
+          border-right: 1px solid rgba(0, 0, 0, .3);
+          line-height: 1;
+          vertical-align: middle;
+
+          &:last-child {
+            border-right: none;
+          }
+        }
+
+        .site-nav-link {
+          display: block;
+          color: #111;
+          font-size: 12px;
+          font-weight: normal;
+          letter-spacing: 2px;
+          line-height: 1.2;
+          text-decoration: none;
+          text-transform: uppercase;
+          -webkit-font-smoothing: antialiased;
+
+          &:link,
+          &:visited,
+          &:active {
+            color: #111;
+          }
+
+          &:hover,
+          &:focus {
+            color: #111;
+
+            .link-extra {
+              transform: scaleX(1);
+            }
+          }
+        }
+
+        .site-nav-link > .ng-scope {
+          position: relative;
+          display: inline-block;
+          padding-bottom: 4px;
+        }
+
+        .link-extra {
+          position: absolute;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          display: block;
+          height: 1px;
+          background: #111;
+          transform: scaleX(0);
+          transform-origin: center;
+          transition: transform .28s ease;
+        }
+
+        @media @idx-tablet {
+          max-width: ~"calc(100vw - 108px)";
+          overflow-x: auto;
+          padding-right: 18px;
+          padding-left: 18px;
+          -webkit-overflow-scrolling: touch;
+
+          li {
+            padding: 0 12px;
+          }
+        }
+
+        @media @idx-phone {
+          top: 14px;
+          left: 12px;
+          max-width: ~"calc(100vw - 78px)";
+          padding: 11px 12px;
+
+          li {
+            padding: 0 10px;
+          }
+
+          .site-nav-link {
+            font-size: 11px;
+            letter-spacing: 1px;
+          }
+        }
+      }
+
+      &.scroll-up.off-screen .idx-property-section-nav {
+        position: fixed;
+        top: 25px;
+        left: 50%;
+        z-index: 101;
+        max-width: ~"calc(100vw - 150px)";
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate(-50%, 0);
+
+        @media @idx-tablet {
+          left: 20px;
+          transform: translateY(0);
+        }
+      }
+
+      &.scroll-up.off-screen .idx-property-section-nav {
+        li {
+          border-right-color: rgba(255, 255, 255, .35);
+        }
+
+        .site-nav-link,
+        .site-nav-link:link,
+        .site-nav-link:visited,
+        .site-nav-link:active,
+        .site-nav-link:hover,
+        .site-nav-link:focus {
+          color: #fff;
+        }
+
+        .link-extra {
+          background: #fff;
+        }
+      }
+
+      &.scroll-down .idx-property-section-nav {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      body.preview &::before {
+        top: 45px;
+      }
+
+      body.preview &.scroll-up.off-screen .idx-property-section-nav {
+        top: 67px;
+      }
+
+      #gallery,
+      #stats,
+      #description,
+      #details,
+      #map,
+      #contact {
+        scroll-margin-top: 92px;
+      }
+
+      body.preview & #gallery,
+      body.preview & #stats,
+      body.preview & #description,
+      body.preview & #details,
+      body.preview & #map,
+      body.preview & #contact {
+        scroll-margin-top: 137px;
+      }
+
+      .gallery-video-container {
+        position: relative;
+        max-width: 1400px;
+        margin: 0 auto;
+        overflow: hidden;
+        background: #242424;
+        box-shadow: 0 0 0 100vmax #242424;
+        clip-path: inset(0 -100vmax);
+      }
+
+      .gallery-fallback {
+        position: relative;
+        overflow: hidden;
+        max-width: 1400px;
+        margin: 0 auto;
+        background: #242424;
+        box-shadow: 0 0 0 100vmax #242424;
+        clip-path: inset(0 -100vmax);
+
+        img {
+          display: block;
+          width: 100%;
+        }
+      }
+
+      .gallery-video-container,
+      .gallery-video-container .swiper-container,
+      .gallery-video-container .swiper-wrapper,
+      .gallery-video-container .swiper-slide,
+      .gallery-video-container .swiper-zoom-container,
+      .gallery-video-container stratus-swiper-carousel {
+        background: #242424;
+      }
+
+      .listing-credit-mls {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin: 24px 0 0;
+        color: #34383b;
+        font-size: 12px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+
+        .mls-logo img {
+          display: block;
+          max-height: 18px;
+        }
+      }
+
+      .big-stats {
+        padding: 70px 8%;
+        text-align: center;
+      }
+
       .about-description-container {
         position: relative;
         max-width: none;
@@ -1367,6 +1679,18 @@ stratus-idx-property-details {
           }
         }
       }
+    }
+
+    &.property-details-luxury {
+      .big-stats:extend(stratus-idx-property-details .property-details-default.property-details-showcase .big-stats all) {}
+      .about-description-container:extend(stratus-idx-property-details .property-details-default.property-details-showcase .about-description-container all) {}
+      .details-specs:extend(stratus-idx-property-details .property-details-default.property-details-showcase .details-specs all) {}
+      .open-house-container:extend(stratus-idx-property-details .property-details-default.property-details-showcase .open-house-container all) {}
+      .secondary-image-container:extend(stratus-idx-property-details .property-details-default.property-details-showcase .secondary-image-container all) {}
+      .map-location.details-container:extend(stratus-idx-property-details .property-details-default.property-details-showcase .map-location.details-container all) {}
+      .additional-details.details-container:extend(stratus-idx-property-details .property-details-default.property-details-showcase .additional-details.details-container all) {}
+      .disclaimer-container.details-container:extend(stratus-idx-property-details .property-details-default.property-details-showcase .disclaimer-container.details-container all) {}
+      .contact-container.details-container:extend(stratus-idx-property-details .property-details-default.property-details-showcase .contact-container.details-container all) {}
     }
 
     &.property-details-magazine {

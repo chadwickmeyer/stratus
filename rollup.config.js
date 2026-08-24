@@ -3,6 +3,22 @@ import { nodeResolve } from '@rollup/plugin-node-resolve'
 // import commonjs from '@rollup/plugin-commonjs'
 import postcss from 'rollup-plugin-postcss'
 
+const stripRuntimeLessDependencies = () => ({
+  name: 'strip-runtime-less-dependencies',
+  generateBundle(options, bundle) {
+    Object.keys(bundle).forEach((fileName) => {
+      const chunk = bundle[fileName]
+      if (chunk.type !== 'chunk' || typeof chunk.code !== 'string') {
+        return
+      }
+      chunk.code = chunk.code.replace(
+        /(['"])(?:\.\/[^'"]+|[^'"]+)\.less\1/g,
+        "'@stratusjs/core/misc'"
+      )
+    })
+  }
+})
+
 export default [
   // ------------------------
   // Core Config
@@ -239,7 +255,8 @@ export default [
         use: ['less'],
         minimize: true,
         sourceMap: true
-      })
+      }),
+      stripRuntimeLessDependencies()
     ]
   },
   // ------------------------

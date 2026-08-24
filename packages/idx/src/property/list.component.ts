@@ -978,6 +978,14 @@ Stratus.Components.IdxPropertyList = {
                 // ev.stopPropagation()
             }
             if ($scope.detailsLinkPopup === true) {
+                const pageScrollX = $window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0
+                const pageScrollY = $window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
+                const restorePageScroll = (): void => {
+                    $timeout(() => {
+                        $window.scrollTo(pageScrollX, pageScrollY)
+                        $timeout(() => $window.scrollTo(pageScrollX, pageScrollY), 0, false)
+                    }, 0, false)
+                }
                 // Opening a popup will load the propertyDetails and adjust the hashbang URL
                 const templateOptions: {
                     'element-id': string,
@@ -1091,6 +1099,7 @@ Stratus.Components.IdxPropertyList = {
                     }
                 })
                     .then(() => {
+                        restorePageScroll()
                     }, () => {
                         Idx.setUrlOptions('Listing', {})
                         if ($scope.urlLoad) {
@@ -1100,6 +1109,7 @@ Stratus.Components.IdxPropertyList = {
                         Idx.setPageTitle()
                         // Let's destroy it to save memory
                         $timeout(() => Idx.unregisterDetailsInstance('property_detail_popup', 'property'), 10)
+                        restorePageScroll()
                     })
             } else {
                 $window.open($scope.getDetailsURL(model), $scope.detailsLinkTarget)

@@ -143,12 +143,17 @@ Stratus.Components.IdxPropertyDetails = {
         const updateSectionNavState = (): void => {
             sectionNavAnimationFrame = 0
             const root = document.getElementById($scope.elementId)
-            if (!root || !root.classList.contains('property-details-showcase') || !sectionNavScrollElement) {
+            const supportsSectionNav = root && (
+                root.classList.contains('property-details-showcase') ||
+                root.classList.contains('property-details-luxury')
+            )
+            if (!supportsSectionNav || !sectionNavScrollElement) {
                 return
             }
 
             const scrollTop = Math.max(sectionNavScrollElement.scrollTop || 0, 0)
-            const offScreen = scrollTop > 100
+            const offScreenThreshold = root.classList.contains('property-details-luxury') ? 400 : 100
+            const offScreen = scrollTop > offScreenThreshold
             const scrollingUp = scrollTop < sectionNavLastScrollTop
 
             root.classList.toggle('off-screen', offScreen)
@@ -167,7 +172,11 @@ Stratus.Components.IdxPropertyDetails = {
 
         const setupSectionNavScroll = (): void => {
             const root = document.getElementById($scope.elementId)
-            if (!root || !root.classList.contains('property-details-showcase')) {
+            const supportsSectionNav = root && (
+                root.classList.contains('property-details-showcase') ||
+                root.classList.contains('property-details-luxury')
+            )
+            if (!supportsSectionNav) {
                 return
             }
 
