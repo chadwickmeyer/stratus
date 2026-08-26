@@ -15,6 +15,7 @@
     "compile": "node_modules/.bin/gulp compile",
     "compress": "node_modules/.bin/gulp compress",
     "design": "node_modules/.bin/gulp design",
+    "compileLESS": "node_modules/.bin/gulp compileLESS",
     "dist": "node_modules/.bin/gulp dist",
     "compileCSS": "node_modules/.bin/gulp compileCSS",
     "compileCoffee": "node_modules/.bin/gulp compileCoffee",

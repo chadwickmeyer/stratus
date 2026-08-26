@@ -1142,10 +1142,6 @@ const getDetailsTemplateFromLayout = (layout?: string): string | null => {
         case 'Showcase':
         case 'showcase':
             return 'details.showcase'
-        case 'PropertyFilter-Magazine':
-        case 'Magazine':
-        case 'magazine':
-            return 'details.magazine'
         case 'PropertyFilter-Cosmopolitan':
         case 'Cosmopolitan':
         case 'cosmopolitan':

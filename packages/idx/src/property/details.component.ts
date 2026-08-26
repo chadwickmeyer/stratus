@@ -145,7 +145,9 @@ Stratus.Components.IdxPropertyDetails = {
             const root = document.getElementById($scope.elementId)
             const supportsSectionNav = root && (
                 root.classList.contains('property-details-showcase') ||
-                root.classList.contains('property-details-luxury')
+                root.classList.contains('property-details-luxury') ||
+                root.classList.contains('property-details-cosmopolitan') ||
+                root.classList.contains('property-details-compact')
             )
             if (!supportsSectionNav || !sectionNavScrollElement) {
                 return
@@ -174,7 +176,9 @@ Stratus.Components.IdxPropertyDetails = {
             const root = document.getElementById($scope.elementId)
             const supportsSectionNav = root && (
                 root.classList.contains('property-details-showcase') ||
-                root.classList.contains('property-details-luxury')
+                root.classList.contains('property-details-luxury') ||
+                root.classList.contains('property-details-cosmopolitan') ||
+                root.classList.contains('property-details-compact')
             )
             if (!supportsSectionNav) {
                 return

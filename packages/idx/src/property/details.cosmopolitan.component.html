@@ -14,220 +14,242 @@
             vocab="https://schema.org/" typeof="RealEstateListing Offer Accommodation"
     >
 
-        <div class="details-header static-element" property="address">
-            <h1 class="address">
-                <span data-ng-bind="::model.data.InternetAddressDisplayYN === false ? 'Address Not Disclosed' : getStreetAddress()" aria-label="Street Address"></span>
-            </h1>
-            <h4>
-                <span data-ng-bind="::model.data.City" aria-label="City"></span>
-                <!-- TODO If not CA, what about model.data.StateOrProvince? -->
-            </h4>
-        </div>
+        <nav class="idx-property-section-nav property-navigation"
+             aria-label="Property Sections">
+            <ul class="list-inline">
+                <li class="link-gallery">
+                    <a class="site-nav-link" data-level="1" href="#gallery" aria-label="Gallery">
+                        <span aria-hidden="true" class="ng-scope"><span class="menu-text">Gallery</span><span class="link-extra"></span></span>
+                    </a>
+                </li>
+                <li class="link-stats">
+                    <a class="site-nav-link" data-level="1" href="#stats" aria-label="Stats">
+                        <span aria-hidden="true" class="ng-scope"><span class="menu-text">Stats</span><span class="link-extra"></span></span>
+                    </a>
+                </li>
+                <li class="link-description">
+                    <a class="site-nav-link" data-level="1" href="#description" aria-label="Description">
+                        <span aria-hidden="true" class="ng-scope"><span class="menu-text">Description</span><span class="link-extra"></span></span>
+                    </a>
+                </li>
+                <li class="link-details">
+                    <a class="site-nav-link" data-level="1" href="#details" aria-label="Details">
+                        <span aria-hidden="true" class="ng-scope"><span class="menu-text">Details</span><span class="link-extra"></span></span>
+                    </a>
+                </li>
+                <li class="link-map" data-ng-if="::getGoogleMapEmbed()">
+                    <a class="site-nav-link" data-level="1" href="#map" aria-label="Map">
+                        <span aria-hidden="true" class="ng-scope"><span class="menu-text">Map</span><span class="link-extra"></span></span>
+                    </a>
+                </li>
+                <li class="link-contact" data-ng-if="::contact || Idx.sharedValues.contact">
+                    <a class="site-nav-link" data-level="1" href="#contact" aria-label="Contact">
+                        <span aria-hidden="true" class="ng-scope"><span class="menu-text">Contact</span><span class="link-extra"></span></span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
 
-        <div class="gallery-video-container static-element" data-ng-if="model.data.Images && model.data.Images.length > 0">
-            <stratus-swiper-carousel
-                    data-init-now="model.completed"
-                    data-slides="images"
-                    aria-label="Slideshow of Images"
-            ></stratus-swiper-carousel>
-            <!-- autoplay="true" -->
-            <!-- pagination='{"clickable":true,"render":"numberBullet"}' -->
-        </div>
-        <div class="gallery-fallback" data-ng-if="!model.data.Images || (model.data.Images && model.data.Images.length < 1)">
-            <img data-ng-src="{{::localDir}}images/no-image.jpg" aria-label="No Images Available" alt="No Images Available">
-        </div>
+        <section id="gallery" class="property-header header-content static-element" property="address" aria-label="Property Header">
+            <div class="gallery-video-container gallery" data-ng-if="model.data.Images && model.data.Images.length > 0">
+                <stratus-swiper-carousel
+                        data-init-now="model.completed"
+                        data-slides="images"
+                        aria-label="Slideshow of Images"
+                ></stratus-swiper-carousel>
+            </div>
+            <div class="gallery-fallback gallery" data-ng-if="!model.data.Images || (model.data.Images && model.data.Images.length < 1)">
+                <img data-ng-src="{{::localDir}}images/no-image.jpg" aria-label="No Images Available" alt="No Images Available">
+            </div>
+            <div class="title-area">
+                <p>
+                    <span data-ng-bind="::model.data.InternetAddressDisplayYN === false ? 'Address Not Disclosed' : getStreetAddress()" aria-label="Street Address"></span><span data-ng-if="::model.data.City">, <span data-ng-bind="::model.data.City" aria-label="City"></span></span><span data-ng-if="::model.data.ClosePrice || model.data.ListPrice"> | <span data-ng-bind="'$' + (model.data.ClosePrice || model.data.ListPrice | number)" aria-label="Property Price"></span></span>
+                </p>
+            </div>
+        </section>
 
-
-        <div class="about-container details-container static-element">
-            <div class="clearfix">
-                <section class="details-left" role="region" aria-label="Detail Highlights">
-                    <h2>About</h2>
-                    <ul class="details-specs primary_font" aria-label="Detail Highlights">
-                        <li>
-                            <!-- TODO need a prettier word for the status and a detail of real status -->
+        <div id="stats" class="big-stats-wrapper static-element">
+            <div class="big-stats-area-left">
+                <div class="big-stats details-container font-secondary">
+                    <div class="status-container">
+                        <div class="status template-background-color-dark">
                             <span data-ng-bind="::Idx.getFullStatus(model.data, preferredStatus)" role="text"></span>
-                        </li>
-                        <li data-ng-if="::model.data.BedroomsTotal && model.data.BedroomsTotal > 0" role="text">
-                            <span data-ng-bind="::model.data.BedroomsTotal" property="numberOfBedrooms"></span> Beds
-                        </li>
-                        <li
-                                data-ng-if="::(model.data.BathroomsFull && model.data.BathroomsFull > 0) || (model.data.BathroomsTotalInteger && model.data.BathroomsTotalInteger > 0)"
-                                role="text"
-                        >
-                            <span data-ng-bind="::model.data.BathroomsFull || model.data.BathroomsTotalInteger" property="numberOfFullBathrooms"></span>
-                            Baths
-                        </li>
-                        <li data-ng-if="::model.data.BathroomsHalf && model.data.BathroomsHalf > 0" role="text">
-                            <span data-ng-bind="::model.data.BathroomsHalf"></span> Half Baths
-                        </li>
-                        <li data-ng-if="::model.data.BathroomsOneQuarter && model.data.BathroomsOneQuarter > 0" role="text">
-                            <span data-ng-bind="::model.data.BathroomsOneQuarter"></span> Quarter Baths
-                        </li>
-                        <li data-ng-if="::model.data.BathroomsThreeQuarter && model.data.BathroomsThreeQuarter > 0" role="text">
-                            <span data-ng-bind="::model.data.BathroomsThreeQuarter"></span> Three Quarter Baths
-                        </li>
-                        <li data-ng-if="::model.data.BathroomsPartial && model.data.BathroomsPartial > 0" role="text">
-                            <span data-ng-bind="::model.data.BathroomsPartial" property="numberOfPartialBathrooms"></span> Partial Baths
-                        </li>
-                        <li data-ng-if="::model.data.CloseDate && Idx.getFriendlyStatus(model.data) == 'Closed'" role="text">
-                            <span data-ng-bind="::Idx.getFriendlyStatus(model.data, preferredStatus)"></span> on
-                            <time data-ng-bind="::model.data.CloseDate | moment:{unix:false,format:'MMM Do YYYY'}" datetime="{{::model.data.CloseDate}}"></time>
-                        </li>
-                        <li data-ng-if="::model.data.OnMarketDate" role="text">
-                            Listed on
-                            <time data-ng-bind="::model.data.OnMarketDate | moment:{unix:false,format:'MMM Do YYYY'}" datetime="{{::model.data.OnMarketDate}}" property="datePosted"></time>
-                        </li>
-                        <li data-ng-if="::model.data.CloseDate && model.data.ClosePrice && model.data.ListPrice" role="text">
-                            Listed at <span data-ng-bind="'$' + (model.data.ListPrice | number)"></span>
-                        </li>
-                        <li data-ng-if="::model.data.OnMarketDate && Idx.getFriendlyStatus(model.data) === 'Closed' && model.data.CloseDate" role="text">
-                            <!-- Closed with start and end Dates. Give number of days between -->
-                            Days on Market:
-                            <span data-ng-bind="::model.data.OnMarketDate | moment:{unix:false,diff:model.data.CloseDate,duration:'days'}"></span>
-                        </li>
-                        <li data-ng-if="::model.data.OnMarketDate && Idx.getFriendlyStatus(model.data) !== 'Closed'" role="text">
-                            <!-- Not Closed Yet, Days since open -->
-                            Days on Market:
-                            <span data-ng-bind="::model.data.OnMarketDate | moment:{unix:false,diff:true,duration:'days'}"></span>
-                        </li>
-                        <li data-ng-if="::model.data.DaysOnMarket && !model.data.OnMarketDate" role="text">
-                            <!-- MLS provides DaysOnMarket, but we weren't given a Start time, use MLS provided times (may be inaccurate) -->
-                            Days on Market: <span data-ng-bind="::model.data.DaysOnMarket | number"></span>
-                        </li>
-                        <li data-ng-if="::model.data.ArchitecturalStyle" role="text">
-                            Style: <span data-ng-repeat="item in ::model.data.ArchitecturalStyle" class="repeatedArray"><span data-ng-bind="::item"></span><span class="hideLastChild">,&nbsp;</span></span>
-                        </li>
-                        <li data-ng-if="::model.data.YearBuilt" aria-label="Year Built" role="text">
-                            Built in <span data-ng-bind="::model.data.YearBuilt"  property="yearBuilt"></span>
-                        </li>
-                        <li data-ng-if="::model.data.LivingArea && model.data.LivingArea > 0" role="text">
-                            Living Area:
-                            <span data-ng-bind="::model.data.LivingArea | number"></span>
-                            <span data-ng-if="::model.data.LivingAreaUnits">
-								<span data-ng-bind="::model.data.LivingAreaUnits"></span>
-							</span>
-                            <span data-ng-if="::!model.data.LivingAreaUnits">
-								Square Feet
-							</span>
-                        </li>
-                        <li data-ng-if="::model.data.LeasableArea && model.data.LeasableArea > 0" role="text">
-                            Leasable:
-                            <span data-ng-bind="::model.data.LeasableArea | number"></span>
-                            <span data-ng-if="::model.data.LeasableAreaUnits">
-								<span data-ng-bind="::model.data.LeasableAreaUnits"></span>
-							</span>
-                            <span data-ng-if="::!model.data.LeasableAreaUnits">
-								Square Feet
-							</span>
-                        </li>
-                        <li data-ng-if="::model.data.BuildingAreaTotal && model.data.BuildingAreaTotal > 0" role="text">
-                            Building:
-                            <span data-ng-bind="::model.data.BuildingAreaTotal | number"></span>
-                            <span data-ng-if="::model.data.BuildingAreaUnits">
-								<span data-ng-bind="::model.data.BuildingAreaUnits"></span>
-							</span>
-                            <span data-ng-if="::!model.data.BuildingAreaUnits">
-								Square Feet
-							</span>
-                        </li>
-                        <li data-ng-if="::model.data.LotSizeArea && model.data.LotSizeArea > 0" role="text">
-                            Lot: <span data-ng-bind="::model.data.LotSizeArea | number"></span>
-                            <span data-ng-if="::model.data.LotSizeUnits">
-								<span data-ng-bind="::model.data.LotSizeUnits"></span>
-							</span>
-                            <span data-ng-if="::!model.data.LotSizeUnits">
-								Square Feet
-							</span>
-                        </li>
-                        <li data-ng-if="!model.data.LotSizeArea && model.data.LotSizeAcres && model.data.LotSizeAcres > 0" role="text">
-                            Lot: <span data-ng-bind="::model.data.LotSizeAcres"></span> Acres
-                        </li>
-                        <li data-ng-if="!model.data.LotSizeArea && model.data.LotSizeSquareFeet && model.data.LotSizeSquareFeet > 0" role="text">
-                            Lot: <span data-ng-bind="::model.data.LotSizeSquareFeet | number"></span> SqFt
-                        </li>
-                        <li data-ng-if="::model.data.PoolPrivateYN">
-                            With Pool
-                        </li>
-                        <li data-ng-if="::model.data.Stories && model.data.Stories > 0" role="text">
-                            Stories: <span data-ng-bind="::model.data.Stories"></span>
-                        </li>
-                        <li data-ng-if="::model.data.PropertyType">
-                            <span data-ng-bind="::model.data.PropertyType" property="accommodationCategory"></span>
-                        </li>
-                        <li data-ng-if="::model.data.PropertySubType && model.data.PropertySubType != model.data.PropertyType" role="text">
-                            <span data-ng-bind="::model.data.PropertySubType"></span>
-                        </li>
-                        <li data-ng-if="::!model.data.PropertyType && !model.data.PropertySubType" role="text">
-                            <span data-ng-bind="::model.data._Class"></span>
-                        </li>
-                        <li class="mls-service" data-ng-if="::model.data.ListingId || model.data.ListingKey" role="text">
-                            <span data-ng-if="::getMLSLogo('tiny')" class="mls-logo"><img data-ng-src="{{::getMLSLogo('tiny')}}" alt="MLS Logo"/></span>
-                            <span data-ng-bind="getMLSName()" data-ng-if="::!getMLSLogo('tiny')" property="maintainer" class="mls-name"></span>#
-                            <span data-ng-bind="::model.data.ListingId || model.data.ListingKey" property="identifier" class="mls-number"></span>
-                        </li>
-                    </ul>
-
-                </section>
-                <div class="details-right">
-
-                    <section class="listing-credit-container dotted-spaced-underline" data-ng-if="::Idx.sharedValues.contact.name || getListAgentName()" role="region" aria-label="Listing Credits" data-layout="row" data-layout-xs="column" data-layout-align="space-around stretch">
-                        <div class="presenting-agent-container" data-ng-if="::Idx.sharedValues.contact.name" data-flex data-layout="column" aria-label="Advertising Broker">
-                            <h4 class="listing-credit-title">Presented By</h4>
-                            <!--p class="listing-credit-contact">Realtor Name | Brokerage Name</p-->
-                            <p class="listing-credit-contact" data-ng-bind="::Idx.sharedValues.contact.name"></p>
-                            <p class="listing-credit-contact" data-ng-if="::Idx.sharedValues.contact.emails && Idx.sharedValues.contact.emails.Main" aria-label="Advertising Broker Contact">
-                                <!--a href="mailto:email@address.com">email@address.com</a-->
-                                <a data-ng-href="mailto:{{::Idx.sharedValues.contact.emails.Main}}" target="_blank" data-ng-bind="::Idx.sharedValues.contact.emails.Main"></a>
-                            </p>
-                            <p class="listing-credit-contact" data-ng-if="::(Idx.sharedValues.contact.phones && Idx.sharedValues.contact.phones.Main) && !(Idx.sharedValues.contact.emails && Idx.sharedValues.contact.emails.Main)" aria-label="Advertising Broker Contact">
-                                <a data-ng-href="tel:{{::Idx.sharedValues.contact.phones.Main}}" data-ng-bind="::Idx.sharedValues.contact.phones.Main"></a>
-                            </p>
                         </div>
-                        <div class="listing-credit-divider" data-ng-if="getListAgentName() && Idx.sharedValues.contact.name" data-flex="10" data-hide-xs></div>
-                        <div class="listing-agent-container" data-ng-if="getListAgentName()" data-flex data-layout="column" aria-label="Listing Broker" property="seller" typeof="Person">
-                            <h4 class="listing-credit-title">Listing Agent</h4>
-                            <p class="listing-credit-contact">
-                                <span data-ng-bind="::getListAgentName()" property="name"></span> | <span data-ng-bind="::model.data.ListOfficeName" property="affiliation"></span>
-                            </p>
-                            <p class="listing-credit-contact" data-ng-if="model.data.ListAgentEmail" aria-label="Listing Broker Contact">
-                                <!--a href="mailto:email@address.com">email@address.com</a-->
-                                <meta property="email" content="{{::model.data.ListAgentEmail}}" />
-                                <a data-ng-href="mailto:{{::model.data.ListAgentEmail}}" target="_blank" data-ng-bind="::model.data.ListAgentEmail"></a>
-                            </p>
-                            <p class="listing-credit-contact" data-ng-if="getListAgentPhone() && !model.data.ListAgentEmail" aria-label="Listing Broker Contact">
-                                <meta property="telephone" content="{{::getListAgentPhone()}}" />
-                                <a data-ng-href="tel:{{::getListAgentPhone()}}" data-ng-bind="::getListAgentPhone()"></a>
-                            </p>
-                            <meta data-ng-if="::model.data.ListAgentStateLicense" property="identifier" content="{{::model.data.ListAgentStateLicense}}" />
-                        </div>
-                    </section>
-
-                    <div class="list-price font-secondary" data-ng-if="::model.data.ClosePrice || model.data.ListPrice" role="text">
-                        <span class="list-price-label" data-ng-bind="Idx.getFriendlyPriceLabel(model.data)"></span>
-                        <span class="list-price" data-ng-bind="'$' + (model.data.ClosePrice || model.data.ListPrice | number)" aria-label="Property Price"></span>
                     </div>
-                    <!-- TODO need a decent way to make a title for Property listings -->
-                    <!--h3 class="property-title">An exclusive haven destined for modern, indoor-outdoor entertaining</h3-->
-                    <div class="font-body description" data-ng-if="::model.data.PublicRemarks && !hideVariables.includes('PublicRemarks')" data-ng-bind-html="::getPublicRemarksHTML()" aria-label="Description" property="description"></div>
-                    <div class="response-container">
-                        <a data-ng-if="::model.data.VirtualTourURLUnbranded && !hideVariables.includes('VirtualTourURLUnbranded')"
-                           data-ng-href="{{::model.data.VirtualTourURLUnbranded}}"
-                           class="vtour btn btn-alt" target="_blank" aria-label="Virtual Tour Link"
-                        >
-                            Virtual Tour
-                        </a>
-                        <a data-ng-if="::!(model.data.VirtualTourURLUnbranded && !hideVariables.includes('VirtualTourURLUnbranded')) && model.data.VirtualTourURLBranded && !hideVariables.includes('VirtualTourURLBranded')"
-                           data-ng-href="{{::model.data.VirtualTourURLBranded}}"
-                           class="vtour btn btn-alt" target="_blank" aria-label="Virtual Tour Link"
-                        >
-                            Virtual Tour
-                        </a>
-                        <!-- TODO no support for files other than images at this time -->
-                        <!--a class="download-PDF btn btn-alt" href="">Download PDF</a-->
+                    <div class="stats-container clearfix">
+                        <div class="big-ass-stat bedrooms"
+                             data-ng-if="::model.data.BedroomsTotal && model.data.BedroomsTotal > 0"
+                             property="numberOfBedrooms">
+                            <span class="stat-value" data-ng-bind="::model.data.BedroomsTotal"></span><span class="stat-label">Beds</span>
+                        </div>
+                        <div class="big-ass-stat bathrooms"
+                             data-ng-if="::(model.data.BathroomsFull && model.data.BathroomsFull > 0) || (model.data.BathroomsTotalInteger && model.data.BathroomsTotalInteger > 0)">
+                            <span class="stat-value" data-ng-bind="::model.data.BathroomsFull || model.data.BathroomsTotalInteger" property="numberOfFullBathrooms"></span><span class="stat-label">Baths</span>
+                        </div>
+                        <div class="big-ass-stat area"
+                             data-ng-if="::(model.data.LivingArea && model.data.LivingArea > 0) || (model.data.LeasableArea && model.data.LeasableArea > 0)">
+                            <span class="stat-value" data-ng-bind="::(model.data.LivingArea || model.data.LeasableArea) | number"></span><span class="stat-label"><span data-ng-if="::model.data.LeasableArea">Leasable</span><span data-ng-if="::!model.data.LeasableArea">Living</span> <span data-ng-bind="::model.data.LeasableAreaUnits || model.data.LivingAreaUnits || 'SqFt'"></span></span>
+                        </div>
+                        <div class="big-ass-stat lot"
+                             data-ng-if="::(model.data.LotSizeSquareFeet && model.data.LotSizeSquareFeet > 0) || (model.data.LotSizeArea && model.data.LotSizeArea > 0) || (model.data.LotSizeAcres && model.data.LotSizeAcres > 0)">
+                            <span class="stat-value" data-ng-bind="::(model.data.LotSizeSquareFeet || model.data.LotSizeArea || model.data.LotSizeAcres) | number"></span><span class="stat-label">Lot <span data-ng-if="::model.data.LotSizeAcres">Acres</span><span data-ng-if="::!model.data.LotSizeAcres" data-ng-bind="::model.data.LotSizeUnits || 'SqFt'"></span></span>
+                        </div>
                     </div>
                 </div>
             </div>
+            <div class="big-stats-area-right" data-ng-if="model.data.Images && model.data.Images.length > 1">
+                <div class="featured-image"
+                     data-stratus-src-version="{{::(model.data.Images[1].Lazy == 'stratus-src' ? 'best' : 'false')}}"
+                     data-stratus-src="{{::model.data.Images[1].MediaURL}}"
+                     data-init-now="model.completed"
+                     aria-label="Property Detail Image">
+                </div>
+            </div>
         </div>
+
+        <section id="description"
+                 class="property-overview-pullout details-container static-element"
+                 data-ng-class="{'read-full': readFull == true}"
+                 role="region" aria-label="Property Description">
+            <h2 class="property-title address">
+                <span data-ng-bind="::model.data.InternetAddressDisplayYN === false ? 'Address Not Disclosed' : getStreetAddress()"></span>
+            </h2>
+            <p class="property-location">
+                <span data-ng-bind="::model.data.City"></span><span data-ng-if="::model.data.StateOrProvince">, <span data-ng-bind="::model.data.StateOrProvince"></span></span><span data-ng-if="::model.data.PostalCode"> <span data-ng-bind="::model.data.PostalCode"></span></span>
+            </p>
+            <div class="list-price font-secondary" data-ng-if="::model.data.ClosePrice || model.data.ListPrice" role="text">
+                <span class="price-background">
+                    <span class="list-price-label" data-ng-bind="Idx.getFriendlyPriceLabel(model.data)"></span>
+                    <span class="list-price-value" data-ng-bind="'$' + (model.data.ClosePrice || model.data.ListPrice | number)" aria-label="Property Price"></span>
+                </span>
+            </div>
+            <div class="description-wrapper"
+                 data-ng-if="::model.data.PublicRemarks && !hideVariables.includes('PublicRemarks')"
+                 data-ng-class="{'has-read-more': model.data.PublicRemarks.length > 600}">
+                <div class="font-body description" data-ng-bind-html="::getPublicRemarksHTML()" aria-label="Description" property="description"></div>
+            </div>
+            <div class="item-action clearfix" data-ng-show="model.data.PublicRemarks.length > 600">
+                <a class="more-text-link font-primary"
+                   role="button"
+                   href="#description"
+                   aria-expanded="false"
+                   data-ng-attr-aria-expanded="{{readFull ? 'true' : 'false'}}"
+                   data-ng-click="readFull=!readFull">
+                    <span class="read-more-text">Read More</span>
+                    <span class="read-less-text">Read Less</span>
+                    <span class="link-extra border-color border-default-bottom"></span>
+                    <span class="link-extra border-default border-default-bottom"></span>
+                </a>
+            </div>
+            <div class="response-container">
+                <a data-ng-if="::model.data.VirtualTourURLUnbranded && !hideVariables.includes('VirtualTourURLUnbranded')"
+                   data-ng-href="{{::model.data.VirtualTourURLUnbranded}}"
+                   class="vtour btn btn-alt" target="_blank" aria-label="Virtual Tour Link"
+                >
+                    Virtual Tour
+                </a>
+                <a data-ng-if="::!(model.data.VirtualTourURLUnbranded && !hideVariables.includes('VirtualTourURLUnbranded')) && model.data.VirtualTourURLBranded && !hideVariables.includes('VirtualTourURLBranded')"
+                   data-ng-href="{{::model.data.VirtualTourURLBranded}}"
+                   class="vtour btn btn-alt" target="_blank" aria-label="Virtual Tour Link"
+                >
+                    Virtual Tour
+                </a>
+            </div>
+            <section class="listing-credit-container dotted-spaced-underline" data-ng-if="::Idx.sharedValues.contact.name || getListAgentName()" role="region" aria-label="Listing Credits" data-layout="row" data-layout-xs="column" data-layout-align="space-around stretch">
+                <div class="presenting-agent-container" data-ng-if="::Idx.sharedValues.contact.name" data-flex data-layout="column" aria-label="Advertising Broker">
+                    <h4 class="listing-credit-title">Presented By</h4>
+                    <p class="listing-credit-contact" data-ng-bind="::Idx.sharedValues.contact.name"></p>
+                    <p class="listing-credit-contact" data-ng-if="::Idx.sharedValues.contact.phones && Idx.sharedValues.contact.phones.Main" aria-label="Advertising Broker Contact Phone">
+                        <a data-ng-href="tel:{{::Idx.sharedValues.contact.phones.Main}}" data-ng-bind="::Idx.sharedValues.contact.phones.Main"></a>
+                    </p>
+                    <p class="listing-credit-contact" data-ng-if="::(!Idx.sharedValues.contact.phones || !Idx.sharedValues.contact.phones.Main) && Idx.sharedValues.contact.emails && Idx.sharedValues.contact.emails.Main" aria-label="Advertising Broker Contact">
+                        <a data-ng-href="mailto:{{::Idx.sharedValues.contact.emails.Main}}" target="_blank" data-ng-bind="::Idx.sharedValues.contact.emails.Main"></a>
+                    </p>
+                </div>
+                <div class="listing-credit-divider" data-ng-if="getListAgentName() && Idx.sharedValues.contact.name" data-flex="10" data-hide-xs></div>
+                <div class="listing-agent-container" data-ng-if="getListAgentName() || model.data.ListingId || model.data.ListingKey" data-flex data-layout="column" aria-label="Listing Broker" property="seller" typeof="Person">
+                    <h4 class="listing-credit-title">Listing Agent</h4>
+                    <p class="listing-credit-contact" data-ng-if="getListAgentName()">
+                        <span data-ng-bind="::getListAgentName()" property="name"></span> | <span data-ng-bind="::model.data.ListOfficeName" property="affiliation"></span>
+                    </p>
+                    <p class="listing-credit-contact" data-ng-if="getListAgentPhone()" aria-label="Listing Broker Contact Phone">
+                        <a data-ng-href="tel:{{::getListAgentPhone()}}" data-ng-bind="::getListAgentPhone()"></a>
+                    </p>
+                    <p class="listing-credit-contact" data-ng-if="!getListAgentPhone() && model.data.ListAgentEmail" aria-label="Listing Broker Contact">
+                        <a data-ng-href="mailto:{{::model.data.ListAgentEmail}}" target="_blank" data-ng-bind="::model.data.ListAgentEmail"></a>
+                    </p>
+                    <p class="mls-service listing-credit-mls" data-ng-if="::model.data.ListingId || model.data.ListingKey" role="text">
+                        <span data-ng-if="::getMLSLogo('tiny')" class="mls-logo"><img data-ng-src="{{::getMLSLogo('tiny')}}" alt="MLS Logo"/></span>
+                        <span data-ng-bind="getMLSName()" data-ng-if="::!getMLSLogo('tiny')" property="maintainer" class="mls-name"></span>
+                        <span class="mls-separator">#</span><span data-ng-bind="::model.data.ListingId || model.data.ListingKey" property="identifier" class="mls-number"></span>
+                    </p>
+                    <meta data-ng-if="::model.data.ListAgentStateLicense" property="identifier" content="{{::model.data.ListAgentStateLicense}}" />
+                </div>
+            </section>
+        </section>
+
+        <section id="details" class="additional-details details-container static-element" role="region" aria-label="Property Details">
+            <h2 class="dotted-spaced-underline">Details</h2>
+            <div>
+                <div class="detail-sections">
+                    <div class="property-details-sub-section details-listing-info"
+                         data-ng-if="::model.data.OnMarketDate || model.data.DaysOnMarket || model.data.CloseDate"
+                    >
+                        <div class="sub-detail-section" role="region" aria-label="Listing Info">
+                            <strong class="section-name">Listing Info</strong>
+                            <div class="sub-detail" data-ng-if="::model.data.OnMarketDate" role="text">
+                                <span class="item-label">List Date: </span>
+                                <time data-ng-bind="::model.data.OnMarketDate | moment:{unix:false,format:'MMM Do YYYY'}" datetime="{{::model.data.OnMarketDate}}" property="datePosted"></time>
+                            </div>
+                            <div class="sub-detail" data-ng-if="::model.data.OnMarketDate && Idx.getFriendlyStatus(model.data) === 'Closed' && model.data.CloseDate" role="text">
+                                <span class="item-label">Days on Market: </span>
+                                <span data-ng-bind="::model.data.OnMarketDate | moment:{unix:false,diff:model.data.CloseDate,duration:'days'}"></span>
+                            </div>
+                            <div class="sub-detail" data-ng-if="::model.data.OnMarketDate && Idx.getFriendlyStatus(model.data) !== 'Closed'" role="text">
+                                <span class="item-label">Days on Market: </span>
+                                <span data-ng-bind="::model.data.OnMarketDate | moment:{unix:false,diff:true,duration:'days'}"></span>
+                            </div>
+                            <div class="sub-detail" data-ng-if="::model.data.DaysOnMarket && !model.data.OnMarketDate" role="text">
+                                <span class="item-label">Days on Market: </span>
+                                <span data-ng-bind="::model.data.DaysOnMarket | number"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <stratus-idx-property-details-sub-section
+                            data-ng-model="model"
+                            data-ng-repeat="detail in ::minorDetails"
+                            section-name="{{::detail.section}}"
+                            items="{{::detail.items | json}}"
+                    >
+                    </stratus-idx-property-details-sub-section>
+
+                    <div class="property-details-sub-section"
+                         data-ng-if="::getListAgentName() || getCoListAgentName() || getBuyerAgentName() || getCoBuyerAgentName() || model.data.ListAgentStateLicense || model.data.CoListAgentStateLicense || model.data.BuyerAgentStateLicense || model.data.CoBuyerAgentStateLicense"
+                    >
+                        <div class="sub-detail-section" role="region" aria-label="Source Agents">
+                            <strong class="section-name">Agent</strong>
+                            <div class="sub-detail" data-ng-if="getListAgentName() || model.data.ListAgentStateLicense" role="text">
+                                <span class="item-label">Listing Agent: </span>
+                                <span data-ng-bind="::getListAgentName()" aria-label="List Agent Name"></span><span data-ng-if="::model.data.ListAgentStateLicense"> (DRE# <span data-ng-bind="::model.data.ListAgentStateLicense" aria-label="List Agent State License"></span>)</span><span data-ng-if="::!model.data.ListAgentStateLicense"> (agent license not available)</span><span data-ng-if="::model.data.ListOfficeName">, <span data-ng-bind="::model.data.ListOfficeName" aria-label="List Office Name"></span></span>
+                            </div>
+                            <div class="sub-detail" data-ng-if="getCoListAgentName() || model.data.CoListAgentStateLicense" role="text">
+                                <span class="item-label">Co-Listing Agent: </span>
+                                <span data-ng-bind="::getCoListAgentName()" aria-label="CoList Agent Name"></span><span data-ng-if="::model.data.CoListAgentStateLicense"> (DRE# <span data-ng-bind="::model.data.CoListAgentStateLicense" aria-label="CoList Agent State License"></span>)</span><span data-ng-if="::!model.data.CoListAgentStateLicense"> (agent license not available)</span><span data-ng-if="::model.data.CoListOfficeName">, <span data-ng-bind="::model.data.CoListOfficeName" aria-label="CoList Office Name"></span></span>
+                            </div>
+                            <div class="sub-detail" data-ng-if="getBuyerAgentName() || model.data.BuyerAgentStateLicense" role="text">
+                                <span class="item-label">Buyer Agent: </span>
+                                <span data-ng-bind="::getBuyerAgentName()" aria-label="Buyer Agent Name"></span><span data-ng-if="::model.data.BuyerAgentStateLicense"> (DRE# <span data-ng-bind="::model.data.BuyerAgentStateLicense" aria-label="Buyer Agent State License"></span>)</span><span data-ng-if="::!model.data.BuyerAgentStateLicense"> (agent license not available)</span><span data-ng-if="::model.data.BuyerOfficeName">, <span data-ng-bind="::model.data.BuyerOfficeName" aria-label="Buyer Office Name"></span></span>
+                            </div>
+                            <div class="sub-detail" data-ng-if="getCoBuyerAgentName() || model.data.CoBuyerAgentStateLicense" role="text">
+                                <span class="item-label">Co-Buyer Agent: </span>
+                                <span data-ng-bind="::getCoBuyerAgentName()" aria-label="CoBuyer Agent Name"></span><span data-ng-if="::model.data.CoBuyerAgentStateLicense"> (DRE# <span data-ng-bind="::model.data.CoBuyerAgentStateLicense" aria-label="CoBuyer Agent State License"></span>)</span><span data-ng-if="::!model.data.CoBuyerAgentStateLicense"> (agent license not available)</span><span data-ng-if="::model.data.CoBuyerOfficeName">, <span data-ng-bind="::model.data.CoBuyerOfficeName" aria-label="CoBuyer Office Name"></span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
 
         <!-- Open Houses -->
         <section class="open-house-container details-container template-background-color-pop static-element"
@@ -285,19 +307,89 @@
             </div>
         </section>
 
-        <!-- This needs to display the second image in the slideshow or maybe the last image? -->
-        <!-- parallax-element disabled, cannot use height altering on the entire widget -->
-        <div class="secondary-image-container">
-            <!-- TODO MLSL requires listrac: data-ng-click="return cms.obj.listtrac.track('lead');"-->
-            <a class="btn btn-alt btn-contact" data-ng-show="::contactUrl || Idx.sharedValues.contactUrl"
-               target="_blank" data-ng-href="{{::contactUrl || Idx.sharedValues.contactUrl}}{{(Idx.sharedValues.contactCommentVariable ? '?' + Idx.sharedValues.contactCommentVariable + '=' + getFullAddress(true) : '')}}"
-               aria-label="Website Contact"
-            >
-                Contact
-            </a>
+        <div class="secondary-image-container cta-area"
+             data-ng-if="::ctaTitle || ctaMiniTitle || ctaValue || ctaButton || ((contact || Idx.sharedValues.contact || contactUrl || Idx.sharedValues.contactUrl) && model.data.Images && model.data.Images.length)"
+             data-ng-class="{'cta-contact-fallback': !(ctaTitle || ctaMiniTitle || ctaValue || ctaButton)}">
+            <div class="cta-content" data-ng-if="::ctaTitle || ctaMiniTitle || ctaValue || ctaButton">
+                <h2 class="cta-title" data-ng-if="::ctaTitle || ctaMiniTitle">
+                    <span class="cta-mini-title alt-title" data-ng-if="::ctaMiniTitle" data-ng-bind-html="::ctaMiniTitle"></span>
+                    <span class="cta-title-text" data-ng-if="::ctaTitle" data-ng-bind-html="::ctaTitle"></span>
+                </h2>
+                <div class="cta-value" data-ng-if="::ctaValue" data-ng-bind-html="::ctaValue"></div>
+                <a class="btn btn-cta btn-contact"
+                   data-ng-if="::ctaButton && (ctaBrowserTarget === '_self' || ctaBrowserTarget === '_blank') && ctaUrl"
+                   data-ng-href="{{::ctaUrl}}"
+                   data-ng-attr-target="{{::ctaBrowserTarget === '_blank' ? '_blank' : undefined}}"
+                   data-ng-attr-rel="{{::ctaBrowserTarget === '_blank' ? 'noreferrer' : undefined}}"
+                   data-ng-bind="::ctaButton"
+                ></a>
+                <button class="btn btn-cta btn-contact"
+                        data-ng-if="::ctaButton && (ctaBrowserTarget === 'popup' || ctaBrowserTarget === 'signIn')"
+                        data-ng-click="openCtaAction()"
+                        data-ng-bind="::ctaButton"
+                ></button>
+            </div>
+            <div class="cta-content cta-contact-content"
+                 data-ng-if="::!(ctaTitle || ctaMiniTitle || ctaValue || ctaButton) && (contact || Idx.sharedValues.contact || contactUrl || Idx.sharedValues.contactUrl)">
+                <h4 class="site-name" data-ng-show="::contact.name || (Idx.sharedValues.contact && Idx.sharedValues.contact.name)" data-ng-bind="::contact.name || Idx.sharedValues.contact.name"></h4>
+                <div class="property-contact-info" data-ng-class="{'property-contact-grouped': contact.groupContactByLabel && contact.labels}">
+                    <span class="site-contact"
+                          data-ng-if="contact.groupContactByLabel && contact.labels"
+                          data-ng-repeat="(label, contactGroup) in ::contact.labels">
+                        <span class="site-info-label" data-ng-bind="::label"></span>
+                        <span class="property-contact-row">
+                            <span class="contact-item contact-{{::type}}" data-ng-repeat-start="(type, value) in ::contactGroup">
+                                <a data-ng-if="::type === 'phones'" data-ng-href="tel:{{::value}}" data-ng-bind="::value"></a>
+                                <a data-ng-if="::type === 'emails'" data-ng-href="mailto:{{::value}}" data-ng-bind="::value" target="_blank"></a>
+                                <a data-ng-if="::type === 'urls'" data-ng-href="{{::value}}" data-ng-bind="::value" rel="noreferrer" target="_blank"></a>
+                                <span data-ng-if="::type !== 'phones' && type !== 'emails' && type !== 'urls'" data-ng-bind="::value"></span>
+                            </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::!$last">|</span>
+                        </span>
+                    </span>
+                    <span class="site-contact" data-ng-if="::!contact.groupContactByLabel || !contact.labels">
+                        <span class="property-contact-row">
+                            <span class="contact-item contact-phones" data-ng-repeat-start="phone in ::contact.phones" data-ng-if="::phone.value">
+                                <span class="name" data-ng-if="::phone.name" data-ng-bind="::phone.name + ':'"></span>
+                                <a data-ng-href="tel:{{::phone.value}}" data-ng-bind="::phone.value"></a>
+                            </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::phone.value && (!$last || contact.emails.length || contact.locations.length || contact.urls.length || contact.licenses.length)">|</span>
+                            <span class="contact-item contact-emails" data-ng-repeat-start="email in ::contact.emails" data-ng-if="::email.value">
+                                <span class="name" data-ng-if="::email.name" data-ng-bind="::email.name + ':'"></span>
+                                <a data-ng-href="mailto:{{::email.value}}" data-ng-bind="::email.value" target="_blank"></a>
+                            </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::email.value && (!$last || contact.locations.length || contact.licenses.length)">|</span>
+                            <span class="contact-item contact-locations" data-ng-repeat-start="location in ::contact.locations" data-ng-if="::location.value">
+                                <span class="name" data-ng-if="::location.name" data-ng-bind="::location.name + ':'"></span>
+                                <a data-ng-href="https://maps.google.com/?q={{::location.value}}" data-ng-bind="::location.value" rel="noreferrer" target="_blank"></a>
+                            </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::location.value && (!$last || contact.urls.length || contact.licenses.length)">|</span>
+                            <span class="contact-item contact-urls" data-ng-repeat-start="url in ::contact.urls" data-ng-if="::url.value">
+                                <span class="name" data-ng-if="::url.name" data-ng-bind="::url.name + ':'"></span>
+                                <a data-ng-href="{{::url.value}}" data-ng-bind="::url.value" rel="noreferrer" target="_blank"></a>
+                            </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::url.value && (!$last || contact.licenses.length)">|</span>
+                            <span class="contact-item contact-licenses" data-ng-repeat-start="license in ::contact.licenses" data-ng-if="::license.value">
+                                <span class="name" data-ng-if="::license.name" data-ng-bind="::license.name + ':'"></span>
+                                <span data-ng-bind="::license.value"></span>
+                            </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::license.value && !$last">|</span>
+                        </span>
+                    </span>
+                    <span class="site-contact" data-ng-if="::!contact && Idx.sharedValues.contact">
+                        <span class="property-contact-row">
+                            <span class="contact-item contact-phones" data-ng-if="Idx.sharedValues.contact.phones && Idx.sharedValues.contact.phones.Main">
+                                <a data-ng-href="tel:{{::Idx.sharedValues.contact.phones.Main}}" data-ng-bind="::Idx.sharedValues.contact.phones.Main"></a>
+                            </span>
+                            <span class="contact-info-separator" data-ng-if="Idx.sharedValues.contact.phones && Idx.sharedValues.contact.phones.Main && Idx.sharedValues.contact.emails && Idx.sharedValues.contact.emails.Main">|</span>
+                            <span class="contact-item contact-emails" data-ng-if="Idx.sharedValues.contact.emails && Idx.sharedValues.contact.emails.Main">
+                                <a data-ng-href="mailto:{{::Idx.sharedValues.contact.emails.Main}}" data-ng-bind="::Idx.sharedValues.contact.emails.Main" target="_blank"></a>
+                            </span>
+                        </span>
+                    </span>
+                </div>
+                <a class="btn btn-cta btn-contact"
+                   data-ng-if="::contactUrl || Idx.sharedValues.contactUrl"
+                   data-ng-href="{{::contactUrl || Idx.sharedValues.contactUrl}}{{(Idx.sharedValues.contactCommentVariable ? '?' + Idx.sharedValues.contactCommentVariable + '=' + getFullAddress(true) : '')}}"
+                   target="_blank"
+                   aria-label="Website Contact"
+                   data-ng-click="openContactAction($event)">Contact</a>
+            </div>
             <div class="image-dimmer" aria-hidden="true"></div>
-            <!-- parallax-content disabled, cannot use height altering on the entire widget -->
-            <!-- FIXME {} can't be used in inline styles as it won't resolve before the page loads (or may not exist) -->
             <div class="image-wrapper"
                  data-ng-if="model.data.Images && model.data.Images[0]"
                  data-stratus-src-version="{{::(model.data.Images[0].Lazy == 'stratus-src' ? 'best' : 'false')}}"
@@ -310,80 +402,106 @@
             </div>
         </div>
 
-        <!-- TODO check if we have markers -->
-        <!--div class="map-location details-container static-element" data-ng-if="::mapMarkers" aria-label="Google Maps Display">
-            <h2 class="dotted-spaced-underline">Location</h2>
-            <sa-map class="google-maps-dynamic"
-                    data-google-maps-key="{{::getGoogleMapsKey()}}"
-                    data-markers="{{::instancePath}}.mapMarkers"
-                    data-zoom="18"
-                    data-map-type="roadmap"
-            ></sa-map>
-        </div-->
-        <div class="map-location details-container static-element" data-ng-if="::getGoogleMapEmbed()" role="presentation" aria-label="Google Maps Display">
+        <div id="map" class="map-location details-container static-element" data-ng-if="::getGoogleMapEmbed()" role="presentation" aria-label="Google Maps Display">
             <h2 class="dotted-spaced-underline">Location</h2>
             <iframe data-ng-src="{{::getGoogleMapEmbed()}}" class="google-map-embed"></iframe>
         </div>
 
-
-        <section class="additional-details details-container static-element" role="region" aria-label="Additional Details">
-            <h2 class="dotted-spaced-underline">More</h2>
-            <!-- TODO Missing quite a number of minor details -->
-            <!-- TODO Wishlist, would love to replace sections with Masonry ability https://passy.github.io/angular-masonry/ -->
-
-            <div>
-                <div class="detail-sections">
-                    <stratus-idx-property-details-sub-section
-                            data-ng-model="model"
-                            data-ng-repeat="detail in ::minorDetails"
-                            section-name="{{::detail.section}}"
-                            items="{{::detail.items | json}}"
-                    >
-                    </stratus-idx-property-details-sub-section>
-
-                    <!-- Agent section (not advanced enough to process automatically yet) -->
-                    <div class="property-details-sub-section"
-                         data-ng-if="::getListAgentName() || getCoListAgentName() || getBuyerAgentName() || getCoBuyerAgentName() || model.data.ListAgentStateLicense || model.data.CoListAgentStateLicense || model.data.BuyerAgentStateLicense || model.data.CoBuyerAgentStateLicense"
-                    >
-                        <div class="sub-detail-section" role="region" aria-label="Source Agents">
-                            <strong class="section-name">Agent</strong>
-                            <div class="sub-detail" data-ng-if="getListAgentName() || model.data.ListAgentStateLicense" role="text">
-                                <span class="item-label">Listing Agent: </span>
-                                <span data-ng-bind="::getListAgentName()" aria-label="List Agent Name"></span><span data-ng-if="::model.data.ListAgentStateLicense"> (DRE# <span data-ng-bind="::model.data.ListAgentStateLicense" aria-label="List Agent State License"></span>)</span><span data-ng-if="::!model.data.ListAgentStateLicense"> (agent license not available)</span><span data-ng-if="::model.data.ListOfficeName">, <span data-ng-bind="::model.data.ListOfficeName" aria-label="List Office Name"></span></span>
-                            </div>
-                            <div class="sub-detail" data-ng-if="getCoListAgentName() || model.data.CoListAgentStateLicense" role="text">
-                                <span class="item-label">Co-Listing Agent: </span>
-                                <span data-ng-bind="::getCoListAgentName()" aria-label="CoList Agent Name"></span><span data-ng-if="::model.data.CoListAgentStateLicense"> (DRE# <span data-ng-bind="::model.data.CoListAgentStateLicense" aria-label="CoList Agent State License"></span>)</span><span data-ng-if="::!model.data.CoListAgentStateLicense"> (agent license not available)</span><span data-ng-if="::model.data.CoListOfficeName">, <span data-ng-bind="::model.data.CoListOfficeName" aria-label="CoList Office Name"></span></span>
-                            </div>
-                            <div class="sub-detail" data-ng-if="getBuyerAgentName() || model.data.BuyerAgentStateLicense" role="text">
-                                <span class="item-label">Buyer Agent: </span>
-                                <span data-ng-bind="::getBuyerAgentName()" aria-label="Buyer Agent Name"></span><span data-ng-if="::model.data.BuyerAgentStateLicense"> (DRE# <span data-ng-bind="::model.data.BuyerAgentStateLicense" aria-label="Buyer Agent State License"></span>)</span><span data-ng-if="::!model.data.BuyerAgentStateLicense"> (agent license not available)</span><span data-ng-if="::model.data.BuyerOfficeName">, <span data-ng-bind="::model.data.BuyerOfficeName" aria-label="Buyer Office Name"></span></span>
-                            </div>
-                            <div class="sub-detail" data-ng-if="getCoBuyerAgentName() || model.data.CoBuyerAgentStateLicense" role="text">
-                                <span class="item-label">Co-Buyer Agent: </span>
-                                <span data-ng-bind="::getCoBuyerAgentName()" aria-label="CoBuyer Agent Name"></span><span data-ng-if="::model.data.CoBuyerAgentStateLicense"> (DRE# <span data-ng-bind="::model.data.CoBuyerAgentStateLicense" aria-label="CoBuyer Agent State License"></span>)</span><span data-ng-if="::!model.data.CoBuyerAgentStateLicense"> (agent license not available)</span><span data-ng-if="::model.data.CoBuyerOfficeName">, <span data-ng-bind="::model.data.CoBuyerOfficeName" aria-label="CoBuyer Office Name"></span></span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <!-- Contact Area -->
-        <section class="contact-container details-container static-element"
-                 data-ng-show="::contact || Idx.sharedValues.contact"
+        <section id="contact"
+                 class="contact-container details-container static-element"
+                 data-ng-class="{'has-background-image': (ctaTitle || ctaMiniTitle || ctaValue || ctaButton) && model.data.Images && model.data.Images.length}"
+                 data-ng-show="::(contact || Idx.sharedValues.contact) && ((ctaTitle || ctaMiniTitle || ctaValue || ctaButton) || !model.data.Images || !model.data.Images.length)"
                  role="region" aria-label="Website Contact"
         >
-            <h2>Contact</h2>
+            <div class="image-dimmer" aria-hidden="true" data-ng-if="::(ctaTitle || ctaMiniTitle || ctaValue || ctaButton) && model.data.Images && model.data.Images.length"></div>
+            <div class="image-wrapper"
+                 data-ng-if="::(ctaTitle || ctaMiniTitle || ctaValue || ctaButton) && model.data.Images && model.data.Images.length"
+                 data-stratus-src-version="{{::((model.data.Images[2] || model.data.Images[1] || model.data.Images[0]).Lazy == 'stratus-src' ? 'best' : 'false')}}"
+                 data-stratus-src="{{::(model.data.Images[2] || model.data.Images[1] || model.data.Images[0]).MediaURL}}"
+                 data-init-now="model.completed"
+                 aria-hidden="true"></div>
+            <h2 data-ng-if="::!(contactUrl || Idx.sharedValues.contactUrl)">Contact</h2>
             <h4 class="site-name" data-ng-show="::contact.name || (Idx.sharedValues.contact && Idx.sharedValues.contact.name)" data-ng-bind="::contact.name || Idx.sharedValues.contact.name"></h4>
 
-            <p class="phone" data-ng-show="(contact.phones && contact.phones.Main) || (Idx.sharedValues.contact.phones && Idx.sharedValues.contact.phones.Main)">
-                <a data-ng-href="tel:{{::contact.phones.Main || Idx.sharedValues.contact.phones.Main}}" data-ng-bind="::contact.phones.Main || Idx.sharedValues.contact.phones.Main"></a>
-            </p>
-            <p class="email" data-ng-show="(contact.emails && contact.emails.Main) || (Idx.sharedValues.contact.emails && Idx.sharedValues.contact.emails.Main)">
-                <a data-ng-href="mailto:{{::contact.emails.Main || Idx.sharedValues.contact.emails.Main}}" data-ng-bind="::contact.emails.Main || Idx.sharedValues.contact.emails.Main" target="_blank" aria-label="Website Email Contact"></a>
-            </p>
+            <div class="property-contact-info" data-ng-class="{'property-contact-grouped': contact.groupContactByLabel && contact.labels}">
+                <span class="site-contact"
+                      data-ng-if="contact.groupContactByLabel && contact.labels"
+                      data-ng-repeat="(label, contactGroup) in ::contact.labels">
+                    <h4 class="site-info-label" data-ng-bind="::label"></h4>
+                    <span class="property-contact-row">
+                        <span class="contact-item contact-{{::type}}" data-ng-repeat-start="(type, value) in ::contactGroup">
+                            <a data-ng-if="::type === 'phones'" data-ng-href="tel:{{::value}}" data-ng-bind="::value"></a>
+                            <a data-ng-if="::type === 'emails'" data-ng-href="mailto:{{::value}}" data-ng-bind="::value" target="_blank"></a>
+                            <a data-ng-if="::type === 'urls'" data-ng-href="{{::value}}" data-ng-bind="::value" rel="noreferrer" target="_blank"></a>
+                            <span data-ng-if="::type !== 'phones' && type !== 'emails' && type !== 'urls'" data-ng-bind="::value"></span>
+                        </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::!$last">|</span>
+                    </span>
+                </span>
+
+                <span class="site-contact" data-ng-if="::!contact.groupContactByLabel || !contact.labels">
+                    <span class="property-contact-row">
+                        <span class="contact-item contact-phones" data-ng-if="::contact.phones && contact.phones.Main">
+                            <a data-ng-href="tel:{{::contact.phones.Main}}" data-ng-bind="::contact.phones.Main"></a>
+                        </span>
+                        <span class="contact-info-separator" data-ng-if="::contact.phones && contact.phones.Main && ((contact && contact.emails && contact.emails.Main) || contact.emails.length || contact.locations.length || contact.urls.length || contact.licenses.length)">|</span>
+                        <span class="contact-item contact-emails" data-ng-if="::contact && contact.emails && contact.emails.Main">
+                            <a data-ng-href="mailto:{{::contact.emails.Main}}" data-ng-bind="::contact.emails.Main" target="_blank"></a>
+                        </span>
+                        <span class="contact-info-separator" data-ng-if="::contact && contact.emails && contact.emails.Main && (contact.phones.length || contact.emails.length || contact.locations.length || contact.urls.length || contact.licenses.length)">|</span>
+                        <span class="contact-item contact-phones"
+                              data-ng-repeat-start="phone in ::contact.phones"
+                              data-ng-if="::phone.value">
+                            <span class="name" data-ng-if="::phone.name" data-ng-bind="::phone.name + ':'"></span>
+                            <a data-ng-href="tel:{{::phone.value}}" data-ng-bind="::phone.value"></a>
+                        </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::phone.value && (!$last || contact.emails.length || contact.locations.length || contact.urls.length || contact.licenses.length)">|</span>
+                        <span class="contact-item contact-emails"
+                              data-ng-repeat-start="email in ::contact.emails"
+                              data-ng-if="::email.value">
+                            <span class="name" data-ng-if="::email.name" data-ng-bind="::email.name + ':'"></span>
+                            <a data-ng-href="mailto:{{::email.value}}" data-ng-bind="::email.value" target="_blank"></a>
+                        </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::email.value && (!$last || contact.locations.length || contact.urls.length || contact.licenses.length)">|</span>
+                        <span class="contact-item contact-locations"
+                              data-ng-repeat-start="location in ::contact.locations"
+                              data-ng-if="::location.value">
+                            <span class="name" data-ng-if="::location.name" data-ng-bind="::location.name + ':'"></span>
+                            <a data-ng-href="https://maps.google.com/?q={{::location.value}}" data-ng-bind="::location.value" rel="noreferrer" target="_blank"></a>
+                        </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::location.value && (!$last || contact.urls.length || contact.licenses.length)">|</span>
+                        <span class="contact-item contact-urls"
+                              data-ng-repeat-start="url in ::contact.urls"
+                              data-ng-if="::url.value">
+                            <span class="name" data-ng-if="::url.name" data-ng-bind="::url.name + ':'"></span>
+                            <a data-ng-href="{{::url.value}}" data-ng-bind="::url.value" rel="noreferrer" target="_blank"></a>
+                        </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::url.value && (!$last || contact.licenses.length)">|</span>
+                        <span class="contact-item contact-licenses"
+                              data-ng-repeat-start="license in ::contact.licenses"
+                              data-ng-if="::license.value">
+                            <span class="name" data-ng-if="::license.name" data-ng-bind="::license.name + ':'"></span>
+                            <span data-ng-bind="::license.value"></span>
+                        </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::license.value && !$last">|</span>
+                    </span>
+                </span>
+
+                <span class="site-contact" data-ng-if="::!contact && Idx.sharedValues.contact">
+                    <span class="property-contact-row">
+                        <span class="contact-item contact-phones" data-ng-if="Idx.sharedValues.contact.phones && Idx.sharedValues.contact.phones.Main">
+                            <a data-ng-href="tel:{{::Idx.sharedValues.contact.phones.Main}}" data-ng-bind="::Idx.sharedValues.contact.phones.Main"></a>
+                        </span>
+                        <span class="contact-info-separator" data-ng-if="Idx.sharedValues.contact.phones && Idx.sharedValues.contact.phones.Main && Idx.sharedValues.contact.emails && Idx.sharedValues.contact.emails.Main">|</span>
+                        <span class="contact-item contact-emails" data-ng-if="Idx.sharedValues.contact.emails && Idx.sharedValues.contact.emails.Main">
+                            <a data-ng-href="mailto:{{::Idx.sharedValues.contact.emails.Main}}" data-ng-bind="::Idx.sharedValues.contact.emails.Main" target="_blank" aria-label="Website Email Contact"></a>
+                        </span>
+                    </span>
+                </span>
+            </div>
+            <a class="btn btn-contact"
+               data-ng-if="::contactUrl || Idx.sharedValues.contactUrl"
+               data-ng-href="{{::contactUrl || Idx.sharedValues.contactUrl}}{{(Idx.sharedValues.contactCommentVariable ? '?' + Idx.sharedValues.contactCommentVariable + '=' + getFullAddress(true) : '')}}"
+               target="_blank"
+               aria-label="Website Contact"
+               data-ng-click="openContactAction($event)"
+            >
+                Contact
+            </a>
 
         </section>
 

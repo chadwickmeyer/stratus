@@ -2014,6 +2014,33 @@ Stratus.Internals.OnScroll = once(() => {
 
 Stratus.Internals.LoadStratusSrcElements = (forceRetry = false) => {
     const placeholderSrc = 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 18%27 preserveAspectRatio=%27none%27%3E%3Cdefs%3E%3ClinearGradient id=%27g%27 x1=%270%27 x2=%271%27%3E%3Cstop stop-color=%27%23111b33%27/%3E%3Cstop offset=%27.5%27 stop-color=%27%233e568e%27 stop-opacity=%27.65%27/%3E%3Cstop offset=%271%27 stop-color=%27%23111b33%27/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%2732%27 height=%2718%27 fill=%27%23111b33%27/%3E%3Crect width=%2732%27 height=%2718%27 fill=%27url(%23g)%27%3E%3Canimate attributeName=%27x%27 values=%27-32;32%27 dur=%271.4s%27 repeatCount=%27indefinite%27/%3E%3C/rect%3E%3C/svg%3E'
+    const bindScrollableAncestors = (nativeEl: HTMLElement) => {
+        let ancestor: HTMLElement|null = nativeEl.parentElement
+        while (ancestor && ancestor !== document.body && ancestor !== document.documentElement) {
+            const style = window.getComputedStyle(ancestor)
+            const canScrollY = /(auto|scroll|overlay)/.test(style.overflowY) && ancestor.scrollHeight > ancestor.clientHeight
+            const canScrollX = /(auto|scroll|overlay)/.test(style.overflowX) && ancestor.scrollWidth > ancestor.clientWidth
+            if (canScrollY || canScrollX) {
+                const scrollAncestor: any = ancestor
+                if (!scrollAncestor.__stratusSrcScrollBound) {
+                    let scrollFrame: any = null
+                    ancestor.addEventListener('scroll', () => {
+                        Stratus.Environment.set('lastUserScrollAt', Date.now())
+                        if (scrollFrame) {
+                            return
+                        }
+                        scrollFrame = requestAnimationFrame(() => {
+                            scrollFrame = null
+                            Stratus.Environment.set('viewPortChange', true)
+                        })
+                    }, Stratus.Environment.get('passiveEventOptions'))
+                    scrollAncestor.__stratusSrcScrollBound = true
+                }
+                break
+            }
+            ancestor = ancestor.parentElement
+        }
+    }
     const getSrcPath = (src: string): string => {
         if (!src) {
             return ''
@@ -2058,6 +2085,7 @@ Stratus.Internals.LoadStratusSrcElements = (forceRetry = false) => {
         if (!nativeEl || nativeEl.getAttribute('data-stratus-src') === 'false') {
             return
         }
+        bindScrollableAncestors(nativeEl)
         const tagType = String(nativeEl.tagName || '').toLowerCase()
         const el = jQuery(nativeEl)
         const src = normalizeLazySrc(hydrate(el.attr('data-src'))) ||

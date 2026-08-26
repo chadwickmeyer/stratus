@@ -4,7 +4,7 @@
 <!-- This shows up if the list is empty -->
 <ng-template #emptyList>
     <div class="media-selected-list-header border-default border-default-bottom">
-        <h3 [textContent]="'Selected ' + (type || 'Items')"></h3>
+        <h3 [textContent]="textDisplay.selected + ' ' + getSelectedTypeLabel()"></h3>
     </div>
     <!--<div class="media-selected-message-box">-->
     <!--    Nothing has been selected.-->
@@ -17,7 +17,7 @@
 
     <!-- FIXME: I will probably have to move the ngIf above to the div below -->
     <div class="media-selected-list-header border-default border-default-bottom" *ngIf="!empty; else emptyList">
-        <h3 [textContent]="'Selected ' + (type || 'Items')"></h3>
+        <h3 [textContent]="textDisplay.selected + ' ' + getSelectedTypeLabel()"></h3>
         <p class="note">Drag to reorder</p>
     </div>
     <div cdkDropList cdkDropListOrientation="horizontal"

@@ -178,6 +178,9 @@ export class MediaSelectorComponent extends RootComponent { // implements OnInit
     libraryDisplay = false
     isSelector = true
     isGrid = true
+    private selectionChangeNotifyQueued = false
+    private selectionChangeSignature = ''
+    private selectionChangeHydrated = false
     // disableRefresh = true
 
     // Drop List
@@ -211,6 +214,7 @@ export class MediaSelectorComponent extends RootComponent { // implements OnInit
      */
     public textDisplay: Record<string, string> = {
         selected: 'Selected',
+        selectedTypeLabel: '',
         items: 'Items',
         openLibrary: 'Open Library',
         closeLibrary: 'Close Library',
@@ -227,6 +231,23 @@ export class MediaSelectorComponent extends RootComponent { // implements OnInit
         document: 'Document',
     }
 
+    private selectedTypeLabelFromType(type: string): string {
+        const normalizedType = String(type || '').trim()
+        if (!normalizedType) {
+            return ''
+        }
+        if (normalizedType.indexOf(',') !== -1) {
+            return this.textDisplay.items || 'Items'
+        }
+        const typeLabels: Record<string, string> = {
+            image: `${this.textDisplay.image || 'Image'}s`,
+            video: `${this.textDisplay.video || 'Video'}s`,
+            audio: this.textDisplay.audio || 'Audio',
+            document: `${this.textDisplay.document || 'Document'}s`,
+        }
+        return typeLabels[normalizedType] || normalizedType
+    }
+
     /**
      *  Custom deep merge that ignores null/empty values
      */
@@ -235,6 +256,64 @@ export class MediaSelectorComponent extends RootComponent { // implements OnInit
             return _.mergeWith({}, obj, src, this.mergeWithIgnoreEmpty.bind(this))
         }
         return src === null || src === '' ? obj : src
+    }
+
+    public getSelectedTypeLabel(): string {
+        return _.startCase(
+            this.textDisplay.selectedTypeLabel ||
+            this.selectedTypeLabelFromType(this.type) ||
+            this.textDisplay.items ||
+            'Media'
+        )
+    }
+
+    private notifySelectionChanged(): void {
+        this.selectionChangeSignature = this.getSelectionChangeSignature()
+        this.elementRef.nativeElement.dispatchEvent(new CustomEvent('stratus-media-selector-change', {
+            bubbles: true,
+            detail: {
+                property: this.property,
+                modelData: this.model?.data || null
+            }
+        }))
+    }
+
+    private notifySelectionChangedSoon(): void {
+        if (this.selectionChangeNotifyQueued) {
+            return
+        }
+        this.selectionChangeNotifyQueued = true
+        setTimeout(() => {
+            this.selectionChangeNotifyQueued = false
+            this.notifySelectionChanged()
+        }, 0)
+    }
+
+    private notifySelectionChangedIfSelectionChanged(): void {
+        const signature = this.getSelectionChangeSignature()
+        if (!this.selectionChangeHydrated) {
+            this.selectionChangeHydrated = true
+            this.selectionChangeSignature = signature
+            return
+        }
+        if (signature === this.selectionChangeSignature) {
+            return
+        }
+        this.selectionChangeSignature = signature
+        this.notifySelectionChangedSoon()
+    }
+
+    private getSelectionChangeSignature(): string {
+        const models = this.dataRef()
+        if (!models || !models.length) {
+            return ''
+        }
+        return models
+            .map((model: any, index: number) => [
+                _.get(model, 'id') || _.get(model, 'url') || _.get(model, 'prefix') || index,
+                _.get(model, 'priority') || 0
+            ].join(':'))
+            .join('|')
     }
 
     // Construct
@@ -331,6 +410,7 @@ export class MediaSelectorComponent extends RootComponent { // implements OnInit
                     this.dataDefer(this.subscriber)
                     this.prioritize()
                     this.refresh()
+                    this.notifySelectionChangedIfSelectionChanged()
                 }
                 data.on('change', onDataChange)
                 onDataChange()
@@ -356,6 +436,7 @@ export class MediaSelectorComponent extends RootComponent { // implements OnInit
         let priority = 0
         _.forEach(models, (model: any) => model.priority = priority++)
         this.model.trigger('change')
+        this.notifySelectionChanged()
     }
 
     /**
@@ -370,6 +451,7 @@ export class MediaSelectorComponent extends RootComponent { // implements OnInit
         let priority = 0
         _.forEach(models, (model: any) => model.priority = priority++)
         this.model.trigger('change')
+        this.notifySelectionChanged()
     }
 
     goToUrl(model: any) {
@@ -497,6 +579,15 @@ export class MediaSelectorComponent extends RootComponent { // implements OnInit
         return !!this.getMediaGraphicUrl(model)
     }
 
+    removeSelectedModel(event: Event, model: any): boolean {
+        if (event) {
+            event.preventDefault()
+            event.stopPropagation()
+        }
+        this.remove(model)
+        return false
+    }
+
     remove(model: any) {
         const models = this.dataRef()
         if (!models || !models.length) {
@@ -506,10 +597,11 @@ export class MediaSelectorComponent extends RootComponent { // implements OnInit
             return
         }
         let index: number = models.indexOf(model)
+        const modelId = _.get(model, 'id')
         // attempt fallback procedure
-        if (index === -1) {
+        if (index === -1 && modelId !== null && modelId !== undefined) {
             const mirrorModels = models
-                .map((m: any) => model.id === m.id ? m : null)
+                .map((m: any) => String(modelId) === String(_.get(m, 'id')) ? m : null)
                 .filter((m: any) => m)
             if (_.isArray(mirrorModels) && mirrorModels.length) {
                 index = models.indexOf(
@@ -522,14 +614,23 @@ export class MediaSelectorComponent extends RootComponent { // implements OnInit
             console.error('unable to find model:', model, 'in selection:', models)
             return
         }
-        models.splice(index, 1)
+        const updatedModels = models.slice()
+        updatedModels.splice(index, 1)
+        if (_.isFunction(this.model.set)) {
+            this.model.set(this.property, updatedModels)
+        } else {
+            models.splice(index, 1)
+        }
         // this.prioritize()
+        this.dataDefer(this.subscriber)
+        this.refresh()
         if (_.isFunction(this.model.handleChanges)) {
             this.model.handleChanges()
         }
         this.model.trigger('change')
+        this.notifySelectionChanged()
         // trigger event emission
-        this.removeFromSelected(model.id)
+        this.removeFromSelected(modelId)
     }
 
     // Data Connections
@@ -729,6 +830,7 @@ export class MediaSelectorComponent extends RootComponent { // implements OnInit
         let priority = 0
         _.forEach(models, (model: any) => model.priority = priority++)
         this.model.trigger('change')
+        this.notifySelectionChanged()
     }
 
     /**

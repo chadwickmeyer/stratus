@@ -361,9 +361,10 @@
         <!-- This needs to display the second image in the slideshow or maybe the last image? -->
         <!-- parallax-element disabled, cannot use height altering on the entire widget -->
         <div class="secondary-image-container cta-area"
-             data-ng-if="::ctaTitle || ctaMiniTitle || ctaValue || ctaButton">
+             data-ng-if="::ctaTitle || ctaMiniTitle || ctaValue || ctaButton || ((contact || Idx.sharedValues.contact || contactUrl || Idx.sharedValues.contactUrl) && model.data.Images && model.data.Images.length)"
+             data-ng-class="{'cta-contact-fallback': !(ctaTitle || ctaMiniTitle || ctaValue || ctaButton)}">
             <!-- TODO MLSL requires listrac: data-ng-click="return cms.obj.listtrac.track('lead');"-->
-            <div class="cta-content">
+            <div class="cta-content" data-ng-if="::ctaTitle || ctaMiniTitle || ctaValue || ctaButton">
                 <h2 class="cta-title" data-ng-if="::ctaTitle || ctaMiniTitle">
                     <span class="cta-mini-title alt-title" data-ng-if="::ctaMiniTitle" data-ng-bind-html="::ctaMiniTitle"></span>
                     <span class="cta-title-text" data-ng-if="::ctaTitle" data-ng-bind-html="::ctaTitle"></span>
@@ -381,6 +382,66 @@
                         data-ng-click="openCtaAction()"
                         data-ng-bind="::ctaButton"
                 ></button>
+            </div>
+            <div class="cta-content cta-contact-content"
+                 data-ng-if="::!(ctaTitle || ctaMiniTitle || ctaValue || ctaButton) && (contact || Idx.sharedValues.contact || contactUrl || Idx.sharedValues.contactUrl)">
+                <h4 class="site-name" data-ng-show="::contact.name || (Idx.sharedValues.contact && Idx.sharedValues.contact.name)" data-ng-bind="::contact.name || Idx.sharedValues.contact.name"></h4>
+                <div class="property-contact-info" data-ng-class="{'property-contact-grouped': contact.groupContactByLabel && contact.labels}">
+                    <span class="site-contact"
+                          data-ng-if="contact.groupContactByLabel && contact.labels"
+                          data-ng-repeat="(label, contactGroup) in ::contact.labels">
+                        <span class="site-info-label" data-ng-bind="::label"></span>
+                        <span class="property-contact-row">
+                            <span class="contact-item contact-{{::type}}" data-ng-repeat-start="(type, value) in ::contactGroup">
+                                <a data-ng-if="::type === 'phones'" data-ng-href="tel:{{::value}}" data-ng-bind="::value"></a>
+                                <a data-ng-if="::type === 'emails'" data-ng-href="mailto:{{::value}}" data-ng-bind="::value" target="_blank"></a>
+                                <a data-ng-if="::type === 'urls'" data-ng-href="{{::value}}" data-ng-bind="::value" rel="noreferrer" target="_blank"></a>
+                                <span data-ng-if="::type !== 'phones' && type !== 'emails' && type !== 'urls'" data-ng-bind="::value"></span>
+                            </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::!$last">|</span>
+                        </span>
+                    </span>
+                    <span class="site-contact" data-ng-if="::!contact.groupContactByLabel || !contact.labels">
+                        <span class="property-contact-row">
+                            <span class="contact-item contact-phones" data-ng-repeat-start="phone in ::contact.phones" data-ng-if="::phone.value">
+                                <span class="name" data-ng-if="::phone.name" data-ng-bind="::phone.name + ':'"></span>
+                                <a data-ng-href="tel:{{::phone.value}}" data-ng-bind="::phone.value"></a>
+                            </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::phone.value && (!$last || contact.emails.length || contact.locations.length || contact.urls.length || contact.licenses.length)">|</span>
+                            <span class="contact-item contact-emails" data-ng-repeat-start="email in ::contact.emails" data-ng-if="::email.value">
+                                <span class="name" data-ng-if="::email.name" data-ng-bind="::email.name + ':'"></span>
+                                <a data-ng-href="mailto:{{::email.value}}" data-ng-bind="::email.value" target="_blank"></a>
+                            </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::email.value && (!$last || contact.locations.length || contact.urls.length || contact.licenses.length)">|</span>
+                            <span class="contact-item contact-locations" data-ng-repeat-start="location in ::contact.locations" data-ng-if="::location.value">
+                                <span class="name" data-ng-if="::location.name" data-ng-bind="::location.name + ':'"></span>
+                                <a data-ng-href="https://maps.google.com/?q={{::location.value}}" data-ng-bind="::location.value" rel="noreferrer" target="_blank"></a>
+                            </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::location.value && (!$last || contact.urls.length || contact.licenses.length)">|</span>
+                            <span class="contact-item contact-urls" data-ng-repeat-start="url in ::contact.urls" data-ng-if="::url.value">
+                                <span class="name" data-ng-if="::url.name" data-ng-bind="::url.name + ':'"></span>
+                                <a data-ng-href="{{::url.value}}" data-ng-bind="::url.value" rel="noreferrer" target="_blank"></a>
+                            </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::url.value && (!$last || contact.licenses.length)">|</span>
+                            <span class="contact-item contact-licenses" data-ng-repeat-start="license in ::contact.licenses" data-ng-if="::license.value">
+                                <span class="name" data-ng-if="::license.name" data-ng-bind="::license.name + ':'"></span>
+                                <span data-ng-bind="::license.value"></span>
+                            </span><span class="contact-info-separator" data-ng-repeat-end data-ng-if="::license.value && !$last">|</span>
+                        </span>
+                    </span>
+                    <span class="site-contact" data-ng-if="::!contact && Idx.sharedValues.contact">
+                        <span class="property-contact-row">
+                            <span class="contact-item contact-phones" data-ng-if="Idx.sharedValues.contact.phones && Idx.sharedValues.contact.phones.Main">
+                                <a data-ng-href="tel:{{::Idx.sharedValues.contact.phones.Main}}" data-ng-bind="::Idx.sharedValues.contact.phones.Main"></a>
+                            </span>
+                            <span class="contact-info-separator" data-ng-if="Idx.sharedValues.contact.phones && Idx.sharedValues.contact.phones.Main && Idx.sharedValues.contact.emails && Idx.sharedValues.contact.emails.Main">|</span>
+                            <span class="contact-item contact-emails" data-ng-if="Idx.sharedValues.contact.emails && Idx.sharedValues.contact.emails.Main">
+                                <a data-ng-href="mailto:{{::Idx.sharedValues.contact.emails.Main}}" data-ng-bind="::Idx.sharedValues.contact.emails.Main" target="_blank"></a>
+                            </span>
+                        </span>
+                    </span>
+                </div>
+                <a class="btn btn-cta btn-contact"
+                   data-ng-if="::contactUrl || Idx.sharedValues.contactUrl"
+                   data-ng-href="{{::contactUrl || Idx.sharedValues.contactUrl}}{{(Idx.sharedValues.contactCommentVariable ? '?' + Idx.sharedValues.contactCommentVariable + '=' + getFullAddress(true) : '')}}"
+                   target="_blank"
+                   aria-label="Website Contact"
+                   data-ng-click="openContactAction($event)">Contact</a>
             </div>
             <div class="image-dimmer" aria-hidden="true"></div>
             <!-- parallax-content disabled, cannot use height altering on the entire widget -->
@@ -416,9 +477,17 @@
         <!-- Contact Area -->
         <section id="contact"
                  class="contact-container details-container static-element"
-                 data-ng-show="::contact || Idx.sharedValues.contact"
+                 data-ng-class="{'has-background-image': (ctaTitle || ctaMiniTitle || ctaValue || ctaButton) && model.data.Images && model.data.Images.length}"
+                 data-ng-show="::(contact || Idx.sharedValues.contact) && ((ctaTitle || ctaMiniTitle || ctaValue || ctaButton) || !model.data.Images || !model.data.Images.length)"
                  role="region" aria-label="Website Contact"
         >
+            <div class="image-dimmer" aria-hidden="true" data-ng-if="::(ctaTitle || ctaMiniTitle || ctaValue || ctaButton) && model.data.Images && model.data.Images.length"></div>
+            <div class="image-wrapper"
+                 data-ng-if="::(ctaTitle || ctaMiniTitle || ctaValue || ctaButton) && model.data.Images && model.data.Images.length"
+                 data-stratus-src-version="{{::((model.data.Images[2] || model.data.Images[1] || model.data.Images[0]).Lazy == 'stratus-src' ? 'best' : 'false')}}"
+                 data-stratus-src="{{::(model.data.Images[2] || model.data.Images[1] || model.data.Images[0]).MediaURL}}"
+                 data-init-now="model.completed"
+                 aria-hidden="true"></div>
             <h2 data-ng-if="::!(contactUrl || Idx.sharedValues.contactUrl)">Contact</h2>
             <h4 class="site-name" data-ng-show="::contact.name || (Idx.sharedValues.contact && Idx.sharedValues.contact.name)" data-ng-bind="::contact.name || Idx.sharedValues.contact.name"></h4>
 
@@ -442,11 +511,11 @@
                         <span class="contact-item contact-phones" data-ng-if="::contact.phones && contact.phones.Main">
                             <a data-ng-href="tel:{{::contact.phones.Main}}" data-ng-bind="::contact.phones.Main"></a>
                         </span>
-                        <span class="contact-info-separator" data-ng-if="::contact.phones && contact.phones.Main && ((contact.emails && contact.emails.Main) || contact.emails.length || contact.locations.length || contact.urls.length || contact.licenses.length)">|</span>
-                        <span class="contact-item contact-emails" data-ng-if="::contact.emails && contact.emails.Main">
+                        <span class="contact-info-separator" data-ng-if="::contact.phones && contact.phones.Main && ((contact && contact.emails && contact.emails.Main) || contact.emails.length || contact.locations.length || contact.urls.length || contact.licenses.length)">|</span>
+                        <span class="contact-item contact-emails" data-ng-if="::contact && contact.emails && contact.emails.Main">
                             <a data-ng-href="mailto:{{::contact.emails.Main}}" data-ng-bind="::contact.emails.Main" target="_blank"></a>
                         </span>
-                        <span class="contact-info-separator" data-ng-if="::contact.emails && contact.emails.Main && (contact.phones.length || contact.emails.length || contact.locations.length || contact.urls.length || contact.licenses.length)">|</span>
+                        <span class="contact-info-separator" data-ng-if="::contact && contact.emails && contact.emails.Main && (contact.phones.length || contact.emails.length || contact.locations.length || contact.urls.length || contact.licenses.length)">|</span>
                         <span class="contact-item contact-phones"
                               data-ng-repeat-start="phone in ::contact.phones"
                               data-ng-if="::phone.value">
