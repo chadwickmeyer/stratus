@@ -20,7 +20,7 @@
     <div class="media-component section-container selected-container border-default border-default-all border-radius-default">
         <p class="small-all-caps selected-media-label"
            *ngIf="!empty"
-           [textContent]="textDisplay.selected + ' ' + (textDisplay.selectedTypeLabel || type || textDisplay.items)"></p>
+           [textContent]="textDisplay.selected + ' ' + getSelectedTypeLabel()"></p>
         <!-- TODO: for styles from legacy selector, add class `selected-area` -->
         <div class="media-content media-selected-container"
              cdkDropListGroup
@@ -132,9 +132,7 @@
 
                         <!-- Image hover info -->
                         <!-- this was taken from the stratus-media-short-details component -->
-                        <div class="info-hover-container"
-                             (mouseover)="hovering=true"
-                             (mouseout)="hovering=false">
+                        <div class="info-hover-container">
                             <div class="border-radius-default image-hover-info"
                                  layout="column"
                                  layout-align="space-between center">
@@ -189,11 +187,10 @@
                                                           aria-label="Download"></mat-icon>
                                             </a>
                                         </span>
-                                        <span (click)="remove(selectedModel)">
+                                        <span (click)="removeSelectedModel($event, selectedModel)">
                                             <a class="border-radius-default"
                                                href="#"
                                                [matTooltip]="textDisplay.permanentlyDelete"
-                                               matTooltip="Permanently Delete from Libary"
                                                [attr.aria-label]="textDisplay.permanentlyDelete"
                                                *ngIf="!isSelector">
                                                 <mat-icon class="delete-icon"
@@ -204,14 +201,13 @@
                                             </a>
                                             <a class="border-radius-default"
                                                href="#"
-                                               matTooltip="Remove Selection"
                                                [matTooltip]="textDisplay.removeSelection"
+                                               [attr.aria-label]="textDisplay.removeSelection"
                                                *ngIf="isSelector">
                                                 <mat-icon class="clear-icon"
                                                           svgIcon="media_selector_clear"
                                                           aria-hidden="true"
-                                                          [attr.aria-label]="textDisplay.clear"
-                                                          aria-label="Clear"></mat-icon>
+                                                          [attr.aria-label]="textDisplay.removeSelection"></mat-icon>
                                             </a>
                                         </span>
                                     </div>

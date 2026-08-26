@@ -7,6 +7,7 @@
 // Compile Stylesheets
 import './details.component.less'
 import './details.classic.component.less'
+import './details.layouts.component.less'
 
 // Runtime
 import {extend, get, isArray, isNumber} from 'lodash'
@@ -47,7 +48,14 @@ export type IdxPropertyDetailsScope = IdxDetailsScope<Property> & {
     defaultListOptions: object
     images: object[]
     contact?: object | any
+    contactData?: string
     contactUrl?: string
+    ctaMiniTitle?: string
+    ctaTitle?: string
+    ctaValue?: string
+    ctaButton?: string
+    ctaUrl?: string
+    ctaBrowserTarget?: string
     integrations?: WidgetIntegrations
     minorDetails: SubSectionOptions[]
     alternateMinorDetails: SubSectionOptions[]
@@ -66,6 +74,8 @@ export type IdxPropertyDetailsScope = IdxDetailsScope<Property> & {
     getPublicRemarksHTML(): any
     getSlideshowImages(): SlideImage[]
     getStreetAddress(): string
+    openCtaAction(event?: Event): void
+    openContactAction(event?: Event): void
 
     getListAgentName(): string
     getListAgentPhone(): string
@@ -87,10 +97,17 @@ Stratus.Components.IdxPropertyDetails = {
         images: '@',
         openhouses: '@',
         googleApiKey: '@',
+        contactData: '@',
         contactEmail: '@',
         contactName: '@',
         contactPhone: '@',
         contactWebsiteUrl: '@',
+        ctaMiniTitle: '@',
+        ctaTitle: '@',
+        ctaValue: '@',
+        ctaButton: '@',
+        ctaUrl: '@',
+        ctaBrowserTarget: '@',
         hideVariables: '@',
         preferredStatus: '@',
         options: '@',
@@ -118,6 +135,69 @@ Stratus.Components.IdxPropertyDetails = {
 
         let mlsVariables: MLSService
         let googleMapEmbed: string
+        let sectionNavScrollElement: HTMLElement | null = null
+        let sectionNavLastScrollTop = 0
+        let sectionNavAnimationFrame = 0
+        let sectionNavSetupTimer = 0
+
+        const updateSectionNavState = (): void => {
+            sectionNavAnimationFrame = 0
+            const root = document.getElementById($scope.elementId)
+            const supportsSectionNav = root && (
+                root.classList.contains('property-details-showcase') ||
+                root.classList.contains('property-details-luxury') ||
+                root.classList.contains('property-details-cosmopolitan') ||
+                root.classList.contains('property-details-compact')
+            )
+            if (!supportsSectionNav || !sectionNavScrollElement) {
+                return
+            }
+
+            const scrollTop = Math.max(sectionNavScrollElement.scrollTop || 0, 0)
+            const offScreenThreshold = root.classList.contains('property-details-luxury') ? 400 : 100
+            const offScreen = scrollTop > offScreenThreshold
+            const scrollingUp = scrollTop < sectionNavLastScrollTop
+
+            root.classList.toggle('off-screen', offScreen)
+            root.classList.toggle('on-screen', !offScreen)
+            root.classList.toggle('scroll-up', offScreen && scrollingUp)
+            root.classList.toggle('scroll-down', offScreen && !scrollingUp)
+
+            sectionNavLastScrollTop = scrollTop
+        }
+
+        const handleSectionNavScroll = (): void => {
+            if (!sectionNavAnimationFrame) {
+                sectionNavAnimationFrame = window.requestAnimationFrame(updateSectionNavState)
+            }
+        }
+
+        const setupSectionNavScroll = (): void => {
+            const root = document.getElementById($scope.elementId)
+            const supportsSectionNav = root && (
+                root.classList.contains('property-details-showcase') ||
+                root.classList.contains('property-details-luxury') ||
+                root.classList.contains('property-details-cosmopolitan') ||
+                root.classList.contains('property-details-compact')
+            )
+            if (!supportsSectionNav) {
+                return
+            }
+
+            const scrollElement = (root.closest('stratus-idx-property-details') as HTMLElement) || root.parentElement
+            if (!scrollElement || sectionNavScrollElement === scrollElement) {
+                updateSectionNavState()
+                return
+            }
+
+            if (sectionNavScrollElement) {
+                sectionNavScrollElement.removeEventListener('scroll', handleSectionNavScroll)
+            }
+
+            sectionNavScrollElement = scrollElement
+            sectionNavScrollElement.addEventListener('scroll', handleSectionNavScroll, {passive: true})
+            updateSectionNavState()
+        }
 
         /**
          * All actions that happen first when the component loads
@@ -162,6 +242,12 @@ Stratus.Components.IdxPropertyDetails = {
             $scope.images = []
             $scope.contact = null
             $scope.contactUrl = $attrs.contactWebsiteUrl || null // Will also attempt to fetch from api
+            $scope.ctaMiniTitle = $attrs.ctaMiniTitle || ''
+            $scope.ctaTitle = $attrs.ctaTitle || ''
+            $scope.ctaValue = $attrs.ctaValue || ''
+            $scope.ctaButton = $attrs.ctaButton || ''
+            $scope.ctaUrl = $attrs.ctaUrl || ''
+            $scope.ctaBrowserTarget = $attrs.ctaBrowserTarget || ''
             $scope.integrations = null
 
             /*$scope.contact = []
@@ -175,8 +261,12 @@ Stratus.Components.IdxPropertyDetails = {
                 })
             }*/
 
-            // Use the manually input contact info first (when we fetch, we'll grab a new contact if it was given)
-            if ($attrs.contactName || $attrs.contactEmail || $attrs.contactPhone) {
+            if ($attrs.contactData && isJSON($attrs.contactData)) {
+                $scope.contact = JSON.parse($attrs.contactData)
+            }
+
+            // Use the manually input contact info when structured contact data was not provided.
+            if (!$scope.contact && ($attrs.contactName || $attrs.contactEmail || $attrs.contactPhone)) {
                 $scope.contact = {
                     name: $attrs.contactName || '',
                     emails: {},
@@ -201,6 +291,25 @@ Stratus.Components.IdxPropertyDetails = {
                         }
                     }
                 }
+            }
+
+            $scope.openCtaAction = (): void => {
+                if ($scope.ctaBrowserTarget === 'signIn') {
+                    Stratus.Environment.set('openSignIn', true)
+                    return
+                }
+                Stratus.Environment.set('openContactPopup', true)
+            }
+
+            $scope.openContactAction = (event?: Event): void => {
+                if (!document.querySelector('.site-cta-popup')) {
+                    return
+                }
+
+                if (event) {
+                    event.preventDefault()
+                }
+                Stratus.Environment.set('openContactPopup', true)
             }
 
             /**
@@ -1229,14 +1338,31 @@ Stratus.Components.IdxPropertyDetails = {
                 }
             }
             $scope.fetchProperty().then()
+            sectionNavSetupTimer = window.setTimeout(setupSectionNavScroll)
             Idx.emit('init', $scope)
         }
+
+        $scope.$on('$destroy', () => {
+            if (sectionNavSetupTimer) {
+                window.clearTimeout(sectionNavSetupTimer)
+            }
+            if (sectionNavAnimationFrame) {
+                window.cancelAnimationFrame(sectionNavAnimationFrame)
+            }
+            if (sectionNavScrollElement) {
+                sectionNavScrollElement.removeEventListener('scroll', handleSectionNavScroll)
+            }
+        })
 
         $scope.$watch('model.data', (data?: Model<Property>['data']) => {
             if (
                 data &&
                 data.hasOwnProperty('_ServiceId')
             ) {
+                if (sectionNavSetupTimer) {
+                    window.clearTimeout(sectionNavSetupTimer)
+                }
+                sectionNavSetupTimer = window.setTimeout(setupSectionNavScroll)
                 // Check if empty
                 Idx.devLog('Loaded Details Data:', data)
                 // prepare the images provided

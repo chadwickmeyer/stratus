@@ -47,6 +47,19 @@ sa-internal-media-selector,
     margin: 0 0 5px;
     font-size: 16px;
   }
+
+  &,
+  .selected-media-item,
+  .image-draggable {
+    box-sizing: border-box;
+    width: var(--sa-media-selector-tile-size);
+    min-width: var(--sa-media-selector-tile-size);
+    max-width: var(--sa-media-selector-tile-size);
+    height: var(--sa-media-selector-tile-size);
+    min-height: var(--sa-media-selector-tile-size);
+    max-height: var(--sa-media-selector-tile-size);
+    overflow: hidden;
+  }
 }
 
 // the dragging class appears on the
@@ -247,6 +260,31 @@ sa-internal-media-selector,
     overflow: hidden;
   }
 
+  .selected-media-item {
+    overflow: visible;
+    position: relative;
+    z-index: 1;
+
+    &:hover,
+    &:focus-within {
+      z-index: 100401;
+
+      .info-hover-container {
+        opacity: 1;
+        pointer-events: auto;
+        visibility: visible;
+      }
+
+      .image-hover-info {
+        pointer-events: auto;
+      }
+    }
+  }
+
+  .selected-media-item .image-draggable {
+    overflow: hidden;
+  }
+
   .library-toggle {
     display: block;
 
@@ -275,7 +313,32 @@ sa-internal-media-selector,
   }
 
   .info-hover-container {
+    left: 50%;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    transform: translate(-50%, -100%);
+    transform-origin: center bottom;
+    transition: opacity 120ms ease, visibility 120ms ease;
+    visibility: hidden;
     z-index: 100400;
+    padding-bottom: 8px;
+
+    &::before {
+      content: '';
+      height: 8px;
+      left: 0;
+      position: absolute;
+      right: 0;
+      top: 100%;
+    }
+  }
+
+  .image-hover-info {
+    position: relative;
+    pointer-events: none;
+    z-index: 1;
   }
 
   &.media-selector--empty {
